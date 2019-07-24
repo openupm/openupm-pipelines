@@ -1,3 +1,3 @@
-#OpenUPM Pipelines
+# OpenUPM Pipelines
 
-Azure pipelines for OpenUPM.
+The Azure pipelines for OpenUPM.
