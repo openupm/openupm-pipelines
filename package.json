@@ -1,0 +1,7 @@
+{
+  "name": "openupm-pipelines",
+  "private": true,
+  "version": "0.0.0",
+  "description": "OpenUPM Pipelines",
+  "scripts": {}
+}

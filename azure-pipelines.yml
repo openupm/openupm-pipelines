@@ -1,0 +1,46 @@
+# OpenUPM azure pipelines
+
+trigger: none
+
+variables:
+  # repogit:
+  # repobranch:
+  repodir: repo
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    echo repogit: $(repogit)
+    echo repobranch: $(repobranch)
+  displayName: 'Print environment'
+
+- powershell: |
+    Write-Host "##vso[task.setvariable variable=agent.jobstatus;]canceled"
+    Write-Host "##vso[task.complete result=Canceled;]DONE"
+  condition: and(succeeded(), or(eq(variables['repogit'], ''), eq(variables['repobranch'], '')))
+  displayName: 'Verify environment'
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- task: DeleteFiles@1
+  inputs:
+    contents: $(repogit)
+  displayName: 'Clean target folder'
+
+- script: |
+    git clone --depth 1 --branch $(repobranch) $(repogit) $(repodir)
+    cd $(repodir)
+  displayName: 'Clone target repository'
+
+- task: Npm@1
+  inputs:
+     command: publish
+     workingDir: $(repodir)
+     publishRegistry: useExternalRegistry
+     publishEndpoint: openupm
+  displayName: 'Publish to OpenUPM'
