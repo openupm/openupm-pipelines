@@ -1,6 +1,17 @@
-# Azure Pipelines for OpenUPM.
+# Azure Pipelines for OpenUPM
 
-A proxy builder to build and publish upm package using `Azure Pipelines`.
+A customized proxy builder to build and publish upm package using `Azure Pipelines`.
+
+## Prepare Azura
+
+Prepare a service connection
+- Visit https://dev.azure.com/openupm/openupm
+- Project settings > Service connections > New service connection > npm
+- Connection name, `openupm`
+- Registry URL, `https://package.openupm.com`
+- Personal Token...
+
+## Build with REST API
 
 Required variables
 
@@ -9,7 +20,7 @@ Required variables
         repo_branch: 'master'
     }
 
-## Build with REST API
+If no variables are provided, the build will be [abort as succeeded](https://github.com/lextm/vstsabort).
 
 Api reference: [azure-devops-rest-5.1](https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-5.1).
 
