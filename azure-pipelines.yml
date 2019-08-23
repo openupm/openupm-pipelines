@@ -3,8 +3,8 @@
 trigger: none
 
 variables:
-  # repogit:
-  # repobranch:
+  # repo_url:
+  # repo_branch:
   repodir: repo
 
 pool:
@@ -12,14 +12,14 @@ pool:
 
 steps:
 - script: |
-    echo repogit: $(repogit)
-    echo repobranch: $(repobranch)
+    echo repo_url: $(repo_url)
+    echo repo_branch: $(repo_branch)
   displayName: 'Print environment'
 
 - powershell: |
     Write-Host "##vso[task.setvariable variable=agent.jobstatus;]canceled"
     Write-Host "##vso[task.complete result=Canceled;]DONE"
-  condition: and(succeeded(), or(eq(variables['repogit'], ''), eq(variables['repobranch'], '')))
+  condition: and(succeeded(), or(eq(variables['repo_url'], ''), eq(variables['repo_branch'], '')))
   displayName: 'Verify environment'
 
 - task: NodeTool@0
@@ -29,11 +29,11 @@ steps:
 
 - task: DeleteFiles@1
   inputs:
-    contents: $(repogit)
+    contents: $(repo_url)
   displayName: 'Clean target folder'
 
 - script: |
-    git clone --depth 1 --branch $(repobranch) $(repogit) $(repodir)
+    git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
     cd $(repodir)
   displayName: 'Clone target repository'
 
