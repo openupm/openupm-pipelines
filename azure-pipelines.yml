@@ -14,6 +14,7 @@ steps:
 - script: |
     echo repo_url: $(repo_url)
     echo repo_branch: $(repo_branch)
+    echo build_tag: $(build_tag)
   displayName: 'Print environment'
 
 - powershell: |
@@ -42,5 +43,7 @@ steps:
      command: publish
      workingDir: $(repodir)
      publishRegistry: useExternalRegistry
+     customCommand: 'publish --tag=$(build_tag)'
      publishEndpoint: openupm
+     verbose: true
   displayName: 'Publish to OpenUPM'
