@@ -17,7 +17,8 @@ Required variables
 
     {
         repo_url: 'https://...',
-        repo_branch: 'master'
+        repo_branch: 'master',
+        build_tag: 'latest'
     }
 
 If no variables are provided, the build will be [abort as succeeded](https://github.com/lextm/vstsabort).
@@ -30,7 +31,7 @@ http --ignore-stdin \
   -a username:token \
   post https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1 \
   definition:='{ "id": 1 }' \
-  parameters:='"{ \"repo_url\": \"https://...\", \"repo_branch\": \"master\" }"'
+  parameters:='"{ \"repo_url\": \"https://...\", \"repo_branch\": \"master\", \"build_tag\": \"latest\" }"'
 ```
 
 The `parameters` argument is [a stringified dictionary](https://stackoverflow.com/questions/34343084/start-a-build-and-passing-variables-through-vsts-rest-api/36339920#36339920).
@@ -59,7 +60,8 @@ const buildPipelines = async function () {
       JSON.stringify(
         {
           repo_url: 'https://...',
-          repo_branch: 'master'
+          repo_branch: 'master',
+          build_tag: 'latest',
         }
       )
   }, project);

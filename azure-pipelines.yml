@@ -13,10 +13,11 @@ pool:
 
 steps:
 - script: |
+    echo repodir: $(repodir)
+    echo registry_addr: $(registry_addr)
     echo repo_url: $(repo_url)
     echo repo_branch: $(repo_branch)
     echo build_tag: $(build_tag)
-    echo registry_addr: $(registry_addr)
   displayName: 'Print environment'
 
 - powershell: |
@@ -35,20 +36,10 @@ steps:
     contents: $(repo_url)
   displayName: 'Clean target folder'
 
-# - script: |
-#     echo 'registry=$(registry_addr)' > .npmrc
-#     cat .npmrc
-#   displayName: 'Prepare .npmrc'
-
 - script: |
     git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
     cd $(repodir)
   displayName: 'Clone target repository'
-
-# - task: npmAuthenticate@0
-#   inputs:
-#     customEndpoint: openupm
-#     workingFile: '.npmrc'
 
 - task: Npm@1
   inputs:
@@ -56,7 +47,4 @@ steps:
      workingDir: $(repodir)
      customCommand: 'publish --tag=$(build_tag) --registry=$(registry_addr)'
      customEndpoint: openupm
-    #  publishRegistry: useExternalRegistry
-    #  publishEndpoint: openupm
-     verbose: true
   displayName: 'Publish to OpenUPM'
