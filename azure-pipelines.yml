@@ -54,9 +54,9 @@ steps:
   inputs:
      command: custom
      workingDir: $(repodir)
-     publishRegistry: useExternalRegistry
      customCommand: 'publish --tag=$(build_tag) --registry=$(registry_addr)'
      customEndpoint: openupm
-     publishEndpoint: openupm
+    #  publishRegistry: useExternalRegistry
+    #  publishEndpoint: openupm
      verbose: true
   displayName: 'Publish to OpenUPM'
