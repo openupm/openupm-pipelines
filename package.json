@@ -4,5 +4,7 @@
   "version": "0.0.0",
   "description": "OpenUPM Pipelines",
   "scripts": {},
-  "dependencies": {}
+  "dependencies": {
+    "compare-versions": "^3.5.1"
+  }
 }
