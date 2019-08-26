@@ -7,6 +7,7 @@ variables:
   # repo_branch:
   repodir: repo
   registry_addr: http://package.openupm.com
+  test_var: foo
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -18,6 +19,7 @@ steps:
     echo repo_url: $(repo_url)
     echo repo_branch: $(repo_branch)
     echo build_tag: $(build_tag)
+    echo test_var: $(test_var)
   displayName: 'Print environment'
 
 - powershell: |
@@ -44,6 +46,12 @@ steps:
   inputs:
     contents: $(repo_url)
   displayName: 'Clean target folder'
+
+- script: |
+    echo before: $(test_var)
+    echo "##vso[task.setvariable variable=test_var;]foo"
+    echo after: $(test_var)
+  displayName: 'test var'
 
 - script: |
     git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
