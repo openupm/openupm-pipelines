@@ -49,9 +49,13 @@ steps:
 
 - script: |
     echo before: $(test_var)
-    echo "##vso[task.setvariable variable=test_var;]foo"
+    echo "##vso[task.setvariable variable=test_var;]bar"
     echo after: $(test_var)
   displayName: 'test var'
+
+- script: |
+    echo 2nd check: $(test_var)
+  displayName: 'test var2'
 
 - script: |
     git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
