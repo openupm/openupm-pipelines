@@ -45,6 +45,11 @@ steps:
     command: install
   displayName: 'Install dependencies'
 
+- script: |
+    latest_ver=`npm --registry=$(registry_addr) show $package_name version` || latest_ver=0.0.0
+    echo $latest_ver
+  displayName: 'Get dist tag'
+
 - task: DeleteFiles@1
   inputs:
     contents: $(repodir)
