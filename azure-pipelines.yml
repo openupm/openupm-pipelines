@@ -54,6 +54,15 @@ steps:
   inputs:
      command: custom
      workingDir: $(repodir)
+     customCommand: 'publish --registry=$(registry_addr)'
+     customEndpoint: openupm
+  displayName: 'Publish to OpenUPM with latest tag'
+
+- task: Npm@1
+  inputs:
+     command: custom
+     workingDir: $(repodir)
      customCommand: 'publish --tag=$(build_tag) --registry=$(registry_addr)'
      customEndpoint: openupm
-  displayName: 'Publish to OpenUPM'
+  displayName: 'Publish to OpenUPM with tag'
+  condition: failed()
