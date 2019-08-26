@@ -35,10 +35,10 @@ steps:
     contents: $(repo_url)
   displayName: 'Clean target folder'
 
-- script: |
-    echo 'registry=$(registry_addr)' > .npmrc
-    cat .npmrc
-  displayName: 'Prepare .npmrc'
+# - script: |
+#     echo 'registry=$(registry_addr)' > .npmrc
+#     cat .npmrc
+#   displayName: 'Prepare .npmrc'
 
 - script: |
     git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
