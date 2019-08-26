@@ -6,9 +6,10 @@ variables:
   # repo_url:
   # repo_branch:
   # package_name:
+  # package_ver:
   repodir: repo
   registry_addr: http://package.openupm.com
-  build_tag: latest
+  dist_tag: latest
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -20,6 +21,7 @@ steps:
     echo repo_url: $(repo_url)
     echo repo_branch: $(repo_branch)
     echo package_name: $(package_name)
+    echo package_ver: $(package_ver)
   displayName: 'Print environment'
 
 - powershell: |
@@ -37,6 +39,11 @@ steps:
   condition: and(succeeded(), eq(variables['package_name'], ''))
   displayName: 'Check variable package_name'
 
+- powershell: |
+    exit 1
+  condition: and(succeeded(), eq(variables['package_ver'], ''))
+  displayName: 'Check variable package_ver'
+
 - task: NodeTool@0
   inputs:
     versionSpec: '10.x'
@@ -49,8 +56,16 @@ steps:
 
 - script: |
     latest_ver=`npm --registry=$(registry_addr) show $(package_name) version` || latest_ver=0.0.0
-    echo $latest_ver
-  displayName: 'Get dist tag'
+    echo latest_ver=$latest_ver
+    echo package_ver=$(package_ver)
+    dist-tag=`node get-dist-tag.js $(package_ver) $latest_ver`
+    echo dist_tag=$dist_tag
+    echo "##vso[task.setvariable variable=dist_tag;]$dist_tag"
+  displayName: 'Update variable dist_tag'
+
+- script: |
+    echo dist_tag=$(dist_tag)
+  displayName: 'Print variable dist_tag'
 
 - task: DeleteFiles@1
   inputs:
@@ -66,6 +81,6 @@ steps:
   inputs:
     command: custom
     workingDir: $(repodir)
-    customCommand: 'publish --tag=$(build_tag) --registry=$(registry_addr)'
+    customCommand: 'publish --tag=$(dist_tag) --registry=$(registry_addr)'
     customEndpoint: openupm
   displayName: 'Publish to OpenUPM with tag'
