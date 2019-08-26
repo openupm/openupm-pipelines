@@ -6,7 +6,7 @@ variables:
   # repo_url:
   # repo_branch:
   repodir: repo
-  registry_addr: http://www.openupm.com
+  registry_addr: http://package.openupm.com
 
 pool:
   vmImage: 'ubuntu-latest'
