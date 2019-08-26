@@ -58,7 +58,7 @@ steps:
     latest_ver=`npm --registry=$(registry_addr) show $(package_name) version` || latest_ver=0.0.0
     echo latest_ver=$latest_ver
     echo package_ver=$(package_ver)
-    dist-tag=`node get-dist-tag.js $(package_ver) $latest_ver`
+    dist_tag=`node get-dist-tag.js $(package_ver) $latest_ver`
     echo dist_tag=$dist_tag
     echo "##vso[task.setvariable variable=dist_tag;]$dist_tag"
   displayName: 'Update variable dist_tag'
