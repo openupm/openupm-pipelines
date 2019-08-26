@@ -38,12 +38,16 @@ steps:
     cd $(repodir)
   displayName: 'Clone target repository'
 
+- task: npmAuthenticate@0
+  inputs:
+    customEndpoint: openupm
+
 - task: Npm@1
   inputs:
      command: custom
      workingDir: $(repodir)
      publishRegistry: useExternalRegistry
-     customCommand: 'publish --tag=$(build_tag)'
+     customCommand: 'publish --tag=$(build_tag) --registry=$(customEndpoint)'
      customEndpoint: openupm
      publishEndpoint: openupm
      verbose: true
