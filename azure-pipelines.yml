@@ -5,8 +5,10 @@ trigger: none
 variables:
   # repo_url:
   # repo_branch:
+  # package_name:
   repodir: repo
   registry_addr: http://package.openupm.com
+  build_tag: latest
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -17,7 +19,7 @@ steps:
     echo registry_addr: $(registry_addr)
     echo repo_url: $(repo_url)
     echo repo_branch: $(repo_branch)
-    echo build_tag: $(build_tag)
+    echo package_name: $(package_name)
   displayName: 'Print environment'
 
 - powershell: |
@@ -32,8 +34,8 @@ steps:
 
 - powershell: |
     exit 1
-  condition: and(succeeded(), eq(variables['build_tag'], ''))
-  displayName: 'Check variable build_tag'
+  condition: and(succeeded(), eq(variables['package_name'], ''))
+  displayName: 'Check variable package_name'
 
 - task: NodeTool@0
   inputs:
@@ -46,7 +48,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    latest_ver=`npm --registry=$(registry_addr) show $package_name version` || latest_ver=0.0.0
+    latest_ver=`npm --registry=$(registry_addr) show $(package_name) version` || latest_ver=0.0.0
     echo $latest_ver
   displayName: 'Get dist tag'
 
