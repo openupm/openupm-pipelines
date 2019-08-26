@@ -45,10 +45,10 @@ steps:
     cd $(repodir)
   displayName: 'Clone target repository'
 
-- task: npmAuthenticate@0
-  inputs:
-    customEndpoint: openupm
-    workingFile: '.npmrc'
+# - task: npmAuthenticate@0
+#   inputs:
+#     customEndpoint: openupm
+#     workingFile: '.npmrc'
 
 - task: Npm@1
   inputs:
