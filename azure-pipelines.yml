@@ -1,5 +1,5 @@
 # OpenUPM azure pipelines
-name: $(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)
+name: $(Build.BuildId)
 
 trigger: none
 
@@ -47,8 +47,7 @@ steps:
   displayName: 'Check variable package_ver'
 
 - script: |
-    date_str=`date +'%Y%m%d'`
-    echo "##vso[build.updatebuildnumber]$(build_name)-$(Build.BuildId)-$date_str"
+    echo "##vso[build.updatebuildnumber]$(build_name)-$(Build.BuildId)"
   displayName: 'Update build number'
 
 - task: NodeTool@0
