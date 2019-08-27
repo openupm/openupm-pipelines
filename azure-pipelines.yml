@@ -1,4 +1,5 @@
 # OpenUPM azure pipelines
+name: $(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger: none
 
