@@ -25,24 +25,23 @@ steps:
     echo package_ver: $(package_ver)
   displayName: 'Print environment'
 
-- powershell: |
-    exit 1
+- powershell: exit 1
   condition: and(succeeded(), eq(variables['repo_url'], ''))
   displayName: 'Check variable repo_url'
 
-- powershell: |
-    exit 1
+- powershell: exit 1
   condition: and(succeeded(), eq(variables['repo_branch'], ''))
   displayName: 'Check variable repo_branch'
 
-- powershell: |
-    exit 1
+- powershell: exit 1
   condition: and(succeeded(), eq(variables['package_name'], ''))
   displayName: 'Check variable package_name'
 
-- powershell: |
-    exit 1
+- powershell: exit 1
   condition: and(succeeded(), eq(variables['package_ver'], ''))
+  displayName: 'Check variable package_ver'
+
+- script: echo "##vso[build.updatebuildnumber]name-$(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)"
   displayName: 'Check variable package_ver'
 
 - task: NodeTool@0
@@ -64,8 +63,7 @@ steps:
     echo "##vso[task.setvariable variable=dist_tag;]$dist_tag"
   displayName: 'Update variable dist_tag'
 
-- script: |
-    echo dist_tag=$(dist_tag)
+- script: echo dist_tag=$(dist_tag)
   displayName: 'Print variable dist_tag'
 
 - task: DeleteFiles@1
