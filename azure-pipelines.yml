@@ -41,8 +41,10 @@ steps:
   condition: and(succeeded(), eq(variables['package_ver'], ''))
   displayName: 'Check variable package_ver'
 
-- script: echo "##vso[build.updatebuildnumber]name-$(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)"
-  displayName: 'Check variable package_ver'
+- script: |
+    date_str=`date +'%Y%m%d'`
+    echo "##vso[build.updatebuildnumber]$(package_name)@${package_ver}-$(Build.BuildId)-$date_str"
+  displayName: 'Update build number'
 
 - task: NodeTool@0
   inputs:
