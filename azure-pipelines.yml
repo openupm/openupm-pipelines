@@ -1,5 +1,5 @@
 # OpenUPM azure pipelines
-name: $(Build.BuildId)-$(package_name)-$(Date:yyyyMMdd)$(Rev:.r)
+name: $(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger: none
 
