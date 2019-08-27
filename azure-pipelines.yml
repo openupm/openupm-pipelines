@@ -4,6 +4,7 @@ name: $(Build.BuildId)-$(Date:yyyyMMdd)$(Rev:.r)
 trigger: none
 
 variables:
+  # build_name:
   # repo_url:
   # repo_branch:
   # package_name:
@@ -26,6 +27,10 @@ steps:
   displayName: 'Print environment'
 
 - powershell: exit 1
+  condition: and(succeeded(), eq(variables['build_name'], ''))
+  displayName: 'Check variable build_name'
+
+- powershell: exit 1
   condition: and(succeeded(), eq(variables['repo_url'], ''))
   displayName: 'Check variable repo_url'
 
@@ -43,7 +48,7 @@ steps:
 
 - script: |
     date_str=`date +'%Y%m%d'`
-    echo "##vso[build.updatebuildnumber]$(package_name)@${package_ver}-$(Build.BuildId)-$date_str"
+    echo "##vso[build.updatebuildnumber]$(build_name)-$(Build.BuildId)-$date_str"
   displayName: 'Update build number'
 
 - task: NodeTool@0
