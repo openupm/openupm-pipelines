@@ -62,6 +62,7 @@ steps:
 
 - script: |
     latest_ver=`npm --registry=$(registry_addr) show $(package_name) version` || latest_ver=0.0.0
+    [[ -z "$latest_ver" ]] && latest_ver=0.0.0
     echo latest_ver=$latest_ver
     echo package_ver=$(package_ver)
     dist_tag=`node get-dist-tag.js $(package_ver) $latest_ver`
