@@ -4,50 +4,50 @@ name: $(Build.BuildId)
 trigger: none
 
 variables:
-  # build_name:
-  # repo_url:
-  # repo_branch:
-  # package_name:
-  # package_ver:
-  repodir: repo
-  registry_addr: http://package.openupm.com
-  dist_tag: latest
+  # buildName:
+  # repoUrl:
+  # repoBranch:
+  # packageName:
+  # packageVersion:
+  repoDir: repo
+  registryUrl: http://package.openupm.com
+  distTag: latest
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 - script: |
-    echo repodir: $(repodir)
-    echo registry_addr: $(registry_addr)
-    echo repo_url: $(repo_url)
-    echo repo_branch: $(repo_branch)
-    echo package_name: $(package_name)
-    echo package_ver: $(package_ver)
+    echo repoDir: $(repoDir)
+    echo registryUrl: $(registryUrl)
+    echo repoUrl: $(repoUrl)
+    echo repoBranch: $(repoBranch)
+    echo packageName: $(packageName)
+    echo packageVersion: $(packageVersion)
   displayName: 'Print environment'
 
 - powershell: exit 1
-  condition: and(succeeded(), eq(variables['build_name'], ''))
-  displayName: 'Check variable build_name'
+  condition: and(succeeded(), eq(variables['buildName'], ''))
+  displayName: 'Check variable buildName'
 
 - powershell: exit 1
-  condition: and(succeeded(), eq(variables['repo_url'], ''))
-  displayName: 'Check variable repo_url'
+  condition: and(succeeded(), eq(variables['repoUrl'], ''))
+  displayName: 'Check variable repoUrl'
 
 - powershell: exit 1
-  condition: and(succeeded(), eq(variables['repo_branch'], ''))
-  displayName: 'Check variable repo_branch'
+  condition: and(succeeded(), eq(variables['repoBranch'], ''))
+  displayName: 'Check variable repoBranch'
 
 - powershell: exit 1
-  condition: and(succeeded(), eq(variables['package_name'], ''))
-  displayName: 'Check variable package_name'
+  condition: and(succeeded(), eq(variables['packageName'], ''))
+  displayName: 'Check variable packageName'
 
 - powershell: exit 1
-  condition: and(succeeded(), eq(variables['package_ver'], ''))
-  displayName: 'Check variable package_ver'
+  condition: and(succeeded(), eq(variables['packageVersion'], ''))
+  displayName: 'Check variable packageVersion'
 
 - script: |
-    echo "##vso[build.updatebuildnumber]$(build_name)-$(Build.BuildId)"
+    echo "##vso[build.updatebuildnumber]$(buildName)-$(Build.BuildId)"
   displayName: 'Update build number'
 
 - task: NodeTool@0
@@ -61,32 +61,32 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    latest_ver=`npm --registry=$(registry_addr) show $(package_name) version` || latest_ver=0.0.0
-    [[ -z "$latest_ver" ]] && latest_ver=0.0.0
-    echo latest_ver=$latest_ver
-    echo package_ver=$(package_ver)
-    dist_tag=`node get-dist-tag.js $(package_ver) $latest_ver`
-    echo dist_tag=$dist_tag
-    echo "##vso[task.setvariable variable=dist_tag;]$dist_tag"
-  displayName: 'Update variable dist_tag'
+    latestVersion=`npm --registry=$(registryUrl) show $(packageName) version` || latestVersion=0.0.0
+    [[ -z "$latestVersion" ]] && latestVersion=0.0.0
+    echo latestVersion=$latestVersion
+    echo packageVersion=$(packageVersion)
+    distTag=`node get-dist-tag.js $(packageVersion) $latestVersion`
+    echo distTag=$distTag
+    echo "##vso[task.setvariable variable=distTag;]$distTag"
+  displayName: 'Update variable distTag'
 
-- script: echo dist_tag=$(dist_tag)
-  displayName: 'Print variable dist_tag'
+- script: echo distTag=$(distTag)
+  displayName: 'Print variable distTag'
 
 - task: DeleteFiles@1
   inputs:
-    contents: $(repodir)
+    contents: $(repoDir)
   displayName: 'Clean target folder'
 
 - script: |
-    git clone --depth 1 --branch $(repo_branch) $(repo_url) $(repodir)
-    cd $(repodir)
+    git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+    cd $(repoDir)
   displayName: 'Clone target repository'
 
 - task: Npm@1
   inputs:
     command: custom
-    workingDir: $(repodir)
-    customCommand: 'publish --tag=$(dist_tag) --registry=$(registry_addr)'
+    workingDir: $(repoDir)
+    customCommand: 'publish --tag=$(distTag) --registry=$(registryUrl)'
     customEndpoint: openupm
   displayName: 'Publish to OpenUPM with tag'
