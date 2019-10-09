@@ -60,6 +60,16 @@ steps:
     command: install
   displayName: 'Install dependencies'
 
+- task: DeleteFiles@1
+  inputs:
+    contents: $(repoDir)
+  displayName: 'Clean target folder'
+
+- script: |
+    git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+    cd $(repoDir)
+  displayName: 'Clone target repository'
+
 - script: |
     latestVersion=`npm --registry=$(registryUrl) show $(packageName) version` || latestVersion=0.0.0
     [[ -z "$latestVersion" ]] && latestVersion=0.0.0
@@ -72,16 +82,6 @@ steps:
 
 - script: echo distTag=$(distTag)
   displayName: 'Print variable distTag'
-
-- task: DeleteFiles@1
-  inputs:
-    contents: $(repoDir)
-  displayName: 'Clean target folder'
-
-- script: |
-    git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
-    cd $(repoDir)
-  displayName: 'Clone target repository'
 
 - task: Npm@1
   inputs:
