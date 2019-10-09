@@ -65,7 +65,7 @@ steps:
     [[ -z "$latestVersion" ]] && latestVersion=0.0.0
     echo latestVersion=$latestVersion
     echo packageVersion=$(packageVersion)
-    distTag=`node get-dist-tag.js $(packageVersion) $latestVersion`
+    distTag=`node getDistTag.js $(packageVersion) $latestVersion`
     echo distTag=$distTag
     echo "##vso[task.setvariable variable=distTag;]$distTag"
   displayName: 'Update variable distTag'

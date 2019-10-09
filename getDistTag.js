@@ -21,10 +21,12 @@ const getDistTag = function(localVer, latestVer) {
 
 if (require.main === module) {
   if (process.argv.length < 4) {
-    console.log("Usage: node get-dist-tag.js <local_version> <latest_version>");
+    console.log("Usage: node getDistTag.js <local_version> <latest_version>");
     process.exit(1);
   } else {
     console.log(getDistTag(process.argv[2], process.argv[3]));
     process.exit(0);
   }
 }
+
+module.exports = { getDistTag };

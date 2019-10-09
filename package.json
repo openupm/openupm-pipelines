@@ -3,16 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "description": "OpenUPM Pipelines",
-  "scripts": {},
+  "scripts": {
+    "test": "cross-env NODE_ENV=test mocha"
+  },
   "dependencies": {
     "compare-versions": "^3.5.1"
   },
   "devDependencies": {
+    "cross-env": "^6.0.3",
     "eslint": "^6.5.1",
     "eslint-config-prettier": "^6.3.0",
     "eslint-loader": "^3.0.2",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-vue": "^5.2.3",
-    "prettier": "^1.18.2"
+    "mocha": "^6.2.1",
+    "prettier": "^1.18.2",
+    "should": "^13.2.3"
   }
 }
