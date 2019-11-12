@@ -10,7 +10,7 @@ variables:
   # packageName:
   # packageVersion:
   repoDir: repo
-  registryUrl: http://package.openupm.com
+  registryUrl: https://package.openupm.com
   distTag: latest
 
 pool:
