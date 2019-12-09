@@ -9,6 +9,7 @@ variables:
   # repoBranch:
   # packageName:
   # packageVersion:
+  # packageFolder:
   repoDir: repo
   registryUrl: https://package.openupm.com
   distTag: latest
@@ -24,6 +25,7 @@ steps:
     echo repoBranch: $(repoBranch)
     echo packageName: $(packageName)
     echo packageVersion: $(packageVersion)
+    echo packageFolder: $(packageFolder)
   displayName: 'Print environment'
 
 - powershell: exit 1
@@ -65,10 +67,16 @@ steps:
     contents: $(repoDir)
   displayName: 'Clean target folder'
 
-- script: |
-    git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+- script: git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
     cd $(repoDir)
+    cd ./$(packageFolder)
   displayName: 'Clone target repository'
+
+- script: |
+    cd $(repoDir)
+    cd ./$(packageFolder)
+    echo $PWD
+  displayName: 'Change pwd'
 
 - script: |
     latestVersion=`npm --registry=$(registryUrl) show $(packageName) version` || latestVersion=0.0.0
@@ -86,7 +94,6 @@ steps:
 - task: Npm@1
   inputs:
     command: custom
-    workingDir: $(repoDir)
     customCommand: 'publish --tag=$(distTag) --registry=$(registryUrl)'
     customEndpoint: openupm
   displayName: 'Publish to OpenUPM with tag'
