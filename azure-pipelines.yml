@@ -68,8 +68,6 @@ steps:
   displayName: 'Clean target folder'
 
 - script: git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
-    cd $(repoDir)
-    cd ./$(packageFolder)
   displayName: 'Clone target repository'
 
 - script: |
