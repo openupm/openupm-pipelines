@@ -71,12 +71,6 @@ steps:
   displayName: 'Clone target repository'
 
 - script: |
-    cd $(repoDir)
-    cd ./$(packageFolder)
-    echo $PWD
-  displayName: 'Change pwd'
-
-- script: |
     latestVersion=`npm --registry=$(registryUrl) show $(packageName) version` || latestVersion=0.0.0
     [[ -z "$latestVersion" ]] && latestVersion=0.0.0
     echo latestVersion=$latestVersion
@@ -94,4 +88,5 @@ steps:
     command: custom
     customCommand: 'publish --tag=$(distTag) --registry=$(registryUrl)'
     customEndpoint: openupm
+    workingDir: $(repoDir)
   displayName: 'Publish to OpenUPM with tag'
