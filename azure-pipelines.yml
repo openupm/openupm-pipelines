@@ -86,10 +86,10 @@ steps:
   displayName: 'Print variable distTag'
 
 - script: |
-    if [ -d "$(repo)/$(packageFolder)" ]; then
-      echo "##vso[task.setvariable variable=packageFolder;]$(repo)/$(packageFolder)"
+    if [ -d "$(repoDir)/$(packageFolder)" ]; then
+      echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)/$(packageFolder)"
     else
-      echo "##vso[task.setvariable variable=packageFolder;]$(repo)"
+      echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)"
     fi
   displayName: 'Verify packageFolder variable'
 
