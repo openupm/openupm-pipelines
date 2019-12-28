@@ -101,6 +101,7 @@ steps:
     if [ -f "package.json" ]; then
       npm install -g json
       json -I -f package.json -e 'this.publishConfig = undefined'
+      cat package.json
     fi
   displayName: 'Override publishConfig'
 
