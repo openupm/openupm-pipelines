@@ -97,10 +97,10 @@ steps:
   displayName: 'Print variable packageFolder'
 
 - script: |
-    cd "$(repoDir)/$(packageFolder)"
+    cd "$(packageFolder)"
     if [ -f "package.json" ]; then
       npm install -g json
-      json -I -f package.json -e 'this.publishConfig = undefined'
+      json -I -f package.json -e 'this.publishConfig = { registry: "https://package.openupm.com" }'
       cat package.json
     fi
   displayName: 'Override publishConfig'
