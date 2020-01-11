@@ -9,15 +9,15 @@ variables:
   # repoBranch: master
   # packageName: com.namespace.pkgname
   # packageVersion: semver
-  # packageFolder: '' or path-to-package-json
 
   ### pre-defined variables
   repoDir: repo
   registryUrl: https://package.openupm.com
   distTag: latest
 
-  ### generated variables
+  ### dynamic variables
   # distTag: latest
+  # packageFolder: path-to-package.json
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -28,7 +28,6 @@ steps:
     echo repoBranch: $REPOBRANCH
     echo packageName: $PACKAGENAME
     echo packageVersion: $PACKAGEVERSION
-    echo packageFolder: $PACKAGEFOLDER
     [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
     [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
     [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
@@ -66,19 +65,19 @@ steps:
     echo packageVersion: $(packageVersion)
     # Get DIST_TAG
     DIST_TAG=`node getDistTag.js $(packageVersion) $LATEST_VERSION`
-    echo DIST_TAG=$DIST_TAG
+    echo DIST_TAG: $DIST_TAG
     echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
   displayName: 'Set distTag variable'
 
 - script: |
-    if [ -d "$(repoDir)/$(packageFolder)" ]; then
-      echo packageFolder: $(repoDir)/$(packageFolder)
-      echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)/$(packageFolder)"
-    else
-      echo packageFolder: $(repoDir)
-      echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)"
+    PACKAGEFOLDER=`node findPackage.js $(packageName) $(repoDir)`
+    if [[ -z "$PACKAGEFOLDER" ]]; then
+      echo "WARN: no valid package.json found, fallback to $(repoDir)"
+      PACKAGEFOLDER=$(repoDir)
     fi
-  displayName: 'Verify packageFolder variable'
+    echo PACKAGEFOLDER: $PACKAGEFOLDER
+    echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
+  displayName: 'Detect $(packageFolder)'
 
 - script: |
     cd "$(packageFolder)"
