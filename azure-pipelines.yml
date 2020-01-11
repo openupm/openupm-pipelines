@@ -4,54 +4,40 @@ name: $(Build.BuildId)
 trigger: none
 
 variables:
-  # build variables:
-  # buildName: reponame-semver-buildnum
+  ### context variables
   # repoUrl: https://github.com/owner/reponame
   # repoBranch: master
   # packageName: com.namespace.pkgname
-  # packageVersion: major.minor.patch
-  # packageFolder: <empty> or path-to-package-json
-  # internal variables:
+  # packageVersion: semver
+  # packageFolder: '' or path-to-package-json
+
+  ### pre-defined variables
   repoDir: repo
   registryUrl: https://package.openupm.com
   distTag: latest
+
+  ### generated variables
+  # distTag: latest
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 - script: |
-    echo repoDir: $(repoDir)
-    echo registryUrl: $(registryUrl)
-    echo repoUrl: $(repoUrl)
-    echo repoBranch: $(repoBranch)
-    echo packageName: $(packageName)
-    echo packageVersion: $(packageVersion)
-    echo packageFolder: $(packageFolder)
-  displayName: 'Print environment'
-
-- powershell: exit 1
-  condition: and(succeeded(), eq(variables['buildName'], ''))
-  displayName: 'Check variable buildName'
-
-- powershell: exit 1
-  condition: and(succeeded(), eq(variables['repoUrl'], ''))
-  displayName: 'Check variable repoUrl'
-
-- powershell: exit 1
-  condition: and(succeeded(), eq(variables['repoBranch'], ''))
-  displayName: 'Check variable repoBranch'
-
-- powershell: exit 1
-  condition: and(succeeded(), eq(variables['packageName'], ''))
-  displayName: 'Check variable packageName'
-
-- powershell: exit 1
-  condition: and(succeeded(), eq(variables['packageVersion'], ''))
-  displayName: 'Check variable packageVersion'
+    echo repoUrl: $REPOURL
+    echo repoBranch: $REPOBRANCH
+    echo packageName: $PACKAGENAME
+    echo packageVersion: $PACKAGEVERSION
+    echo packageFolder: $PACKAGEFOLDER
+    [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
+    [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
+    [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
+    [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
+    exit 0
+  displayName: 'Check context variables'
 
 - script: |
-    echo "##vso[build.updatebuildnumber]$(buildName)-$(Build.BuildId)"
+    echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
   displayName: 'Update build number'
 
 - task: NodeTool@0
@@ -67,34 +53,32 @@ steps:
 - task: DeleteFiles@1
   inputs:
     contents: $(repoDir)
-  displayName: 'Clean target folder'
+  displayName: 'Clean $(repoDir) folder'
 
 - script: git clone --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
-  displayName: 'Clone target repository'
+  displayName: 'Clone to $(repoDir) repository'
 
 - script: |
-    latestVersion=`npm --registry=$(registryUrl) show $(packageName) version` || latestVersion=0.0.0
-    [[ -z "$latestVersion" ]] && latestVersion=0.0.0
-    echo latestVersion=$latestVersion
-    echo packageVersion=$(packageVersion)
-    distTag=`node getDistTag.js $(packageVersion) $latestVersion`
-    echo distTag=$distTag
-    echo "##vso[task.setvariable variable=distTag;]$distTag"
-  displayName: 'Get distTag and set variable'
-
-- script: echo distTag=$(distTag)
-  displayName: 'Print variable distTag'
+    # Get LATEST_VERSION
+    LATEST_VERSION=`npm --registry=$(registryUrl) show $(packageName) version` || LATEST_VERSION=0.0.0
+    [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
+    echo LATEST_VERSION: $LATEST_VERSION
+    echo packageVersion: $(packageVersion)
+    # Get DIST_TAG
+    DIST_TAG=`node getDistTag.js $(packageVersion) $LATEST_VERSION`
+    echo DIST_TAG=$DIST_TAG
+    echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+  displayName: 'Set distTag variable'
 
 - script: |
     if [ -d "$(repoDir)/$(packageFolder)" ]; then
+      echo packageFolder: $(repoDir)/$(packageFolder)
       echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)/$(packageFolder)"
     else
+      echo packageFolder: $(repoDir)
       echo "##vso[task.setvariable variable=packageFolder;]$(repoDir)"
     fi
   displayName: 'Verify packageFolder variable'
-
-- script: echo packageFolder=$(packageFolder)
-  displayName: 'Print variable packageFolder'
 
 - script: |
     cd "$(packageFolder)"
@@ -111,4 +95,4 @@ steps:
     customCommand: 'publish --tag=$(distTag) --registry=$(registryUrl)'
     customEndpoint: openupm
     workingDir: $(packageFolder)
-  displayName: 'Publish to OpenUPM with tag'
+  displayName: 'Publish to OpenUPM'
