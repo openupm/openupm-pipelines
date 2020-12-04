@@ -32,8 +32,9 @@ steps:
     [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
     [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
     [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
+    echo "##vso[task.setvariable variable=NODE_OPTIONS]--max_old_space_size=2048"
     exit 0
-  displayName: 'Check context variables'
+  displayName: 'Prepare context variables'
 
 - script: |
     echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
