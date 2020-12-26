@@ -7,20 +7,20 @@
     "test": "cross-env NODE_ENV=test mocha"
   },
   "dependencies": {
-    "compare-versions": "^3.5.1",
+    "compare-versions": "^3.6.0",
     "findit2": "^2.2.3",
     "relative": "^3.0.2"
   },
   "devDependencies": {
-    "cross-env": "^6.0.3",
+    "cross-env": "^7.0.3",
     "eslint": "^6.5.1",
     "eslint-config-prettier": "^6.3.0",
     "eslint-loader": "^3.0.2",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-vue": "^5.2.3",
-    "fs-extra": "^8.1.0",
-    "mocha": "^6.2.1",
-    "prettier": "^1.18.2",
+    "fs-extra": "^9.0.1",
+    "mocha": "^8.2.1",
+    "prettier": "^2.2.1",
     "should": "^13.2.3"
   }
 }
