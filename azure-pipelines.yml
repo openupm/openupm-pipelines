@@ -47,6 +47,12 @@ steps:
 
 - task: Npm@1
   inputs:
+    command: custom
+    customCommand: 'install -g npm@8.7.0'
+  displayName: 'Upgrade npm to v8.7.0'
+
+- task: Npm@1
+  inputs:
     command: install
   displayName: 'Install dependencies'
 
