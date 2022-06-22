@@ -53,6 +53,12 @@ steps:
 
 - task: Npm@1
   inputs:
+    command: custom
+    customCommand: 'install -g husky'
+  displayName: 'Install husky globally'
+
+- task: Npm@1
+  inputs:
     command: install
   displayName: 'Install dependencies'
 
