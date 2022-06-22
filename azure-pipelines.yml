@@ -61,7 +61,9 @@ steps:
     contents: $(repoDir)
   displayName: 'Clean $(repoDir) folder'
 
-- script: git config --global url.https://.insteadOf git://
+- script: |
+    git config --global url."https://github.com/".insteadOf git@github.com:
+    git config --global url."https://".insteadOf git://
   displayName: Git config
   
 - script: git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
