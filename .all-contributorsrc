@@ -14,6 +14,15 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "am1goo",
+      "name": "Pavel \"am1goo\" Shestakov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5287406?v=4",
+      "profile": "https://gaijinent.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
