@@ -23,7 +23,10 @@ const findPackage = function(packageName, searchPath) {
         } catch (err) {
           return;
         }
-        if (pkg.name != packageName) return;
+        if (pkg.name != packageName) {
+            console.log(`wrong package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`);
+            return;
+        }
         finder.stop();
         resolve({ dirname, pkg, file });
       }
