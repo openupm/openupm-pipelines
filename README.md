@@ -78,6 +78,7 @@ const buildPipelines = async function () {
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://littlebigfun.com"><img src="https://avatars.githubusercontent.com/u/125390?v=4?s=100" width="100px;" alt="Favo Yang"/><br /><sub><b>Favo Yang</b></sub></a><br /><a href="https://github.com/openupm/openupm-pipelines/commits?author=favoyang" title="Code">💻</a> <a href="#maintenance-favoyang" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://gaijinent.com/"><img src="https://avatars.githubusercontent.com/u/5287406?v=4?s=100" width="100px;" alt="Pavel "am1goo" Shestakov"/><br /><sub><b>Pavel "am1goo" Shestakov</b></sub></a><br /><a href="https://github.com/openupm/openupm-pipelines/commits?author=am1goo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/James-Frowen"><img src="https://avatars.githubusercontent.com/u/23101891?v=4?s=100" width="100px;" alt="James Frowen"/><br /><sub><b>James Frowen</b></sub></a><br /><a href="https://github.com/openupm/openupm-pipelines/issues?q=author%3AJames-Frowen" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
