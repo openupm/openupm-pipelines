@@ -13,9 +13,13 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "fs-extra": "^9.0.1",
-    "mocha": "^8.2.1",
-    "prettier": "^2.2.1",
+    "fs-extra": "^11.2.0",
+    "mocha": "^10.2.0",
+    "prettier": "^3.2.5",
     "should": "^13.2.3"
+  },
+  "volta": {
+    "node": "18.19.0",
+    "npm": "10.4.0"
   }
 }

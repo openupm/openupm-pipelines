@@ -20,97 +20,97 @@ variables:
   # packageFolder: path-to-package.json
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 steps:
-- script: |
-    echo repoUrl: $REPOURL
-    echo repoBranch: $REPOBRANCH
-    echo packageName: $PACKAGENAME
-    echo packageVersion: $PACKAGEVERSION
-    [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
-    [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
-    [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
-    [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
-    echo "##vso[task.setvariable variable=NODE_OPTIONS]--max_old_space_size=2048"
-    exit 0
-  displayName: 'Prepare context variables'
+  - script: |
+      echo repoUrl: $REPOURL
+      echo repoBranch: $REPOBRANCH
+      echo packageName: $PACKAGENAME
+      echo packageVersion: $PACKAGEVERSION
+      [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
+      [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
+      [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
+      [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
+      echo "##vso[task.setvariable variable=NODE_OPTIONS]--max_old_space_size=2048"
+      exit 0
+    displayName: "Prepare context variables"
 
-- script: |
-    echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
-  displayName: 'Update build number'
+  - script: |
+      echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
+    displayName: "Update build number"
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: '12.x'
-  displayName: 'Install Node.js'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "18.x"
+    displayName: "Install Node.js"
 
-- task: Npm@1
-  inputs:
-    command: custom
-    customCommand: 'install -g npm@8.7.0'
-  displayName: 'Upgrade npm to v8.7.0'
+  - task: Npm@1
+    inputs:
+      command: custom
+      customCommand: "install -g npm@10.4.0"
+    displayName: "Upgrade npm to v10.4.0
 
-- task: Npm@1
-  inputs:
-    command: custom
-    customCommand: 'install -g husky'
-  displayName: 'Install husky globally'
+  - task: Npm@1
+    inputs:
+      command: custom
+      customCommand: "install -g husky"
+    displayName: "Install husky globally"
 
-- task: Npm@1
-  inputs:
-    command: install
-  displayName: 'Install dependencies'
+  - task: Npm@1
+    inputs:
+      command: install
+    displayName: "Install dependencies"
 
-- task: DeleteFiles@1
-  inputs:
-    contents: $(repoDir)
-  displayName: 'Clean $(repoDir) folder'
+  - task: DeleteFiles@1
+    inputs:
+      contents: $(repoDir)
+    displayName: "Clean $(repoDir) folder"
 
-- script: |
-    git config --global url."https://github.com/".insteadOf git@github.com:
-    git config --global url."https://".insteadOf git://
-  displayName: Git config
-  
-- script: git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
-  displayName: 'Clone to $(repoDir) repository'
+  - script: |
+      git config --global url."https://github.com/".insteadOf git@github.com:
+      git config --global url."https://".insteadOf git://
+    displayName: Git config
 
-- script: |
-    # Get LATEST_VERSION
-    LATEST_VERSION=`npm --registry=$(registryUrl) show $(packageName) version` || LATEST_VERSION=0.0.0
-    [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
-    echo LATEST_VERSION: $LATEST_VERSION
-    echo packageVersion: $(packageVersion)
-    # Get DIST_TAG
-    DIST_TAG=`node getDistTag.js $(packageVersion) $LATEST_VERSION`
-    echo DIST_TAG: $DIST_TAG
-    echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
-  displayName: 'Set distTag variable'
+  - script: git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+    displayName: "Clone to $(repoDir) repository"
 
-- script: |
-    echo Locate package.json for: $(packageName)
-    PACKAGEFOLDER=`node findPackage.js $(packageName) $(repoDir)`
-    if [[ -z "$PACKAGEFOLDER" ]]; then
-      echo "Error: ENOENT, error path package.json with name=$(packageName)"
-      exit 1
-    fi
-    echo PACKAGEFOLDER: $PACKAGEFOLDER
-    echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
-  displayName: 'Detect package.json location'
+  - script: |
+      # Get LATEST_VERSION
+      LATEST_VERSION=`npm --registry=$(registryUrl) show $(packageName) version` || LATEST_VERSION=0.0.0
+      [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
+      echo LATEST_VERSION: $LATEST_VERSION
+      echo packageVersion: $(packageVersion)
+      # Get DIST_TAG
+      DIST_TAG=`node getDistTag.js $(packageVersion) $LATEST_VERSION`
+      echo DIST_TAG: $DIST_TAG
+      echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+    displayName: "Set distTag variable"
 
-- script: |
-    cd "$(packageFolder)"
-    if [ -f "package.json" ]; then
-      npm install -g json
-      json -I -f package.json -e 'this.publishConfig = { registry: "https://package.openupm.com" }'
-      cat package.json
-    fi
-  displayName: 'Override publishConfig'
+  - script: |
+      echo Locate package.json for: $(packageName)
+      PACKAGEFOLDER=`node findPackage.js $(packageName) $(repoDir)`
+      if [[ -z "$PACKAGEFOLDER" ]]; then
+        echo "Error: ENOENT, error path package.json with name=$(packageName)"
+        exit 1
+      fi
+      echo PACKAGEFOLDER: $PACKAGEFOLDER
+      echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
+    displayName: "Detect package.json location"
 
-- task: Npm@1
-  inputs:
-    command: custom
-    customCommand: 'publish --tag=$(distTag) --registry=$(registryUrl)'
-    customEndpoint: openupm
-    workingDir: $(packageFolder)
-  displayName: 'Publish to OpenUPM'
+  - script: |
+      cd "$(packageFolder)"
+      if [ -f "package.json" ]; then
+        npm install -g json
+        json -I -f package.json -e 'this.publishConfig = { registry: "https://package.openupm.com" }'
+        cat package.json
+      fi
+    displayName: "Override publishConfig"
+
+  - task: Npm@1
+    inputs:
+      command: custom
+      customCommand: "publish --tag=$(distTag) --registry=$(registryUrl)"
+      customEndpoint: openupm
+      workingDir: $(packageFolder)
+    displayName: "Publish to OpenUPM"
