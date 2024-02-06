@@ -23,6 +23,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "James-Frowen",
+      "name": "James Frowen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23101891?v=4",
+      "profile": "https://github.com/James-Frowen",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
