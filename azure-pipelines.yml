@@ -49,7 +49,7 @@ steps:
     inputs:
       command: custom
       customCommand: "install -g npm@10.4.0"
-    displayName: "Upgrade npm to v10.4.0
+    displayName: "Upgrade npm to v10.4.0"
 
   - task: Npm@1
     inputs:
