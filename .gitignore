@@ -31,3 +31,5 @@ node_modules
 TEST-RESULTS.xml
 
 .vscode
+
+result.json

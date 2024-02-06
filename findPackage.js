@@ -1,10 +1,10 @@
 // Find package folder
-
+const fs = require("fs");
 const findit = require("findit2");
 const path = require("path");
 const relative = require("relative");
 
-const findPackage = function(packageName, searchPath) {
+const findPackage = function (packageName, searchPath) {
   return new Promise((resolve, reject) => {
     try {
       searchPath = path.resolve(process.cwd(), searchPath);
@@ -24,9 +24,12 @@ const findPackage = function(packageName, searchPath) {
           return;
         }
         if (pkg.name != packageName) {
-            console.log(`wrong package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`);
-            return;
+          console.debug(
+            `Mismatched package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`
+          );
+          return;
         }
+        console.debug(`Found package name in ${path.join(dirname, basename)}`);
         finder.stop();
         resolve({ dirname, pkg, file });
       }
@@ -42,12 +45,26 @@ const findPackage = function(packageName, searchPath) {
 };
 
 if (require.main === module) {
-  if (process.argv.length < 4) {
-    console.log("Usage: node findPackage.js <pkg-name> <search-path>");
+  if (process.argv.length < 5) {
+    console.log(
+      "Usage: node findPackage.js <pkg-name> <search-path> <output-filename>"
+    );
     process.exit(1);
   } else {
     findPackage(process.argv[2], process.argv[3])
-      .then(x => console.log(x.dirname))
+      .then((result) => {
+        if (result) {
+          // Write to output file
+          const outputFilename = process.argv[4];
+          const content = JSON.stringify(result);
+          try {
+            fs.writeFileSync(outputFilename, content);
+            console.log("Saved to " + outputFilename);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      })
       .catch(() => {});
   }
 }
