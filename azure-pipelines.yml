@@ -72,7 +72,7 @@ steps:
       git config --global url."https://".insteadOf git://
     displayName: Git config
 
-  - script: git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+  - script: GIT_CLONE_PROTECTION_ACTIVE=false git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
     displayName: "Clone to $(repoDir) repository"
 
   - script: |
