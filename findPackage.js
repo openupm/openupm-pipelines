@@ -5,11 +5,20 @@ const path = require("path");
 const relative = require("relative");
 const { logDebug, logError } = require("./lib/logger");
 
+/**
+ * @param {string} filePath
+ * @returns {{name?: string}}
+ */
 const readPackageJson = function (filePath) {
   const raw = fs.readFileSync(filePath, "utf8");
   return JSON.parse(raw);
 };
 
+/**
+ * @param {string} packageName
+ * @param {string} searchPath
+ * @returns {Promise<{dirname: string, pkg: {name?: string}, file: string} | null>}
+ */
 const findPackage = function (packageName, searchPath) {
   return new Promise((resolve, reject) => {
     try {

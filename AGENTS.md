@@ -20,6 +20,7 @@
 - Prefer clear, function-based modules exported via `module.exports`.
 - Tests follow `test-<module>.js` naming and use Mocha + Should.
 - Prettier is available in devDependencies for formatting when needed.
+- Add JSDoc types for new or modified functions where practical.
 
 ## Testing Guidelines
 

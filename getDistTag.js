@@ -8,7 +8,12 @@
 const compareVersions = require("compare-versions");
 const { logError } = require("./lib/logger");
 
-// Get dist tag, if localVer >= latestVer return latest, otherwise patch@localVer.
+/**
+ * Get dist tag, if localVer >= latestVer return latest, otherwise patch@localVer.
+ * @param {string} localVer
+ * @param {string} latestVer
+ * @returns {string}
+ */
 const getDistTag = function (localVer, latestVer) {
   try {
     let ret = compareVersions(localVer, latestVer);
