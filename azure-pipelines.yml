@@ -42,24 +42,18 @@ steps:
 
   - task: NodeTool@0
     inputs:
-      versionSpec: "18.x"
+      versionSpec: "22.x"
     displayName: "Install Node.js"
 
   - task: Npm@1
     inputs:
       command: custom
-      customCommand: "install -g npm@10.4.0"
-    displayName: "Upgrade npm to v10.4.0"
+      customCommand: "install -g npm@10.9.4"
+    displayName: "Upgrade npm"
 
   - task: Npm@1
     inputs:
-      command: custom
-      customCommand: "install -g husky"
-    displayName: "Install husky globally"
-
-  - task: Npm@1
-    inputs:
-      command: install
+      command: "ci"
     displayName: "Install dependencies"
 
   - task: DeleteFiles@1
@@ -88,14 +82,13 @@ steps:
     displayName: "Set distTag variable"
 
   - script: |
-      npm install -g json
       echo Locate package.json for: $(packageName)
       node findPackage.js $(packageName) $(repoDir) result.json
       if [[ ! -f "result.json" ]]; then
         echo "Error: ENOENT, error path package.json with name=$(packageName)"
         exit 1
       fi
-      PACKAGEFOLDER=$(cat result.json | json 'dirname')
+      PACKAGEFOLDER=$(cat result.json | npx json 'dirname')
       echo "PACKAGEFOLDER: $PACKAGEFOLDER"
       echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
     displayName: "Detect package.json location"
@@ -103,8 +96,7 @@ steps:
   - script: |
       cd "$(packageFolder)"
       if [ -f "package.json" ]; then
-        npm install -g json
-        json -I -f package.json -e 'this.publishConfig = { registry: "https://package.openupm.com" }'
+        npm pkg set publishConfig.registry="https://package.openupm.com"
         cat package.json
       fi
     displayName: "Override publishConfig"

@@ -2,7 +2,7 @@
 
 A customized proxy builder to build and publish upm package using `Azure Pipelines`.
 
-## Prepare Azura
+## Prepare Azure
 
 Prepare a service connection
 - Visit https://dev.azure.com/openupm/openupm
@@ -64,7 +64,7 @@ const buildPipelines = async function () {
         }
       )
   }, project);
-  cconsole.log(build);
+  console.log(build);
 };
 ```
 
