@@ -9,7 +9,16 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:coverage": "c8 --check-coverage --lines 60 --functions 60 --branches 50 --statements 60 npm test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,json,yml,yaml,md}": [
+      "prettier --write"
+    ],
+    "*.js": [
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "compare-versions": "^3.6.0",
@@ -17,13 +26,15 @@
     "relative": "^3.0.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
     "@types/mocha": "^10.0.6",
+    "@types/node": "^22.10.2",
     "c8": "^10.1.2",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "fs-extra": "^11.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "mocha": "^10.2.0",
     "prettier": "^3.2.5",
     "should": "^13.2.3",
