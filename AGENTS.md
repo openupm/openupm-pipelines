@@ -26,6 +26,8 @@
 - Framework: Mocha with `should` assertions.
 - Add tests under `test/` and keep each file focused on one module.
 - Run all tests with `npm test` before submitting changes.
+- When modifying files, run `npm run lint` and `npm run format`.
+- Before committing, run `npm run format:check`.
 
 ## Commit & Pull Request Guidelines
 
