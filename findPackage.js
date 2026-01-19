@@ -3,6 +3,12 @@ const fs = require("fs");
 const findit = require("findit2");
 const path = require("path");
 const relative = require("relative");
+const { logDebug, logError } = require("./lib/logger");
+
+const readPackageJson = function (filePath) {
+  const raw = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(raw);
+};
 
 const findPackage = function (packageName, searchPath) {
   return new Promise((resolve, reject) => {
@@ -19,17 +25,18 @@ const findPackage = function (packageName, searchPath) {
         const dirname = relative(process.cwd(), path.dirname(file));
         let pkg = null;
         try {
-          pkg = require(path.join(file));
+          pkg = readPackageJson(file);
         } catch (err) {
+          logError(`Failed to parse ${path.join(dirname, basename)}`);
           return;
         }
         if (pkg.name != packageName) {
-          console.debug(
+          logDebug(
             `Mismatched package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`,
           );
           return;
         }
-        console.debug(`Found package name in ${path.join(dirname, basename)}`);
+        logDebug(`Found package name in ${path.join(dirname, basename)}`);
         finder.stop();
         resolve({ dirname, pkg, file });
       }
@@ -46,26 +53,34 @@ const findPackage = function (packageName, searchPath) {
 
 if (require.main === module) {
   if (process.argv.length < 5) {
-    console.log(
+    logError(
       "Usage: node findPackage.js <pkg-name> <search-path> <output-filename>",
     );
     process.exit(1);
   } else {
     findPackage(process.argv[2], process.argv[3])
       .then((result) => {
-        if (result) {
-          // Write to output file
-          const outputFilename = process.argv[4];
-          const content = JSON.stringify(result);
-          try {
-            fs.writeFileSync(outputFilename, content);
-            console.log("Saved to " + outputFilename);
-          } catch (err) {
-            console.error(err);
-          }
+        if (!result) {
+          logError(
+            `Error: ENOENT, error path package.json with name=${process.argv[2]}`,
+          );
+          process.exit(1);
+        }
+        // Write to output file
+        const outputFilename = process.argv[4];
+        const content = JSON.stringify(result);
+        try {
+          fs.writeFileSync(outputFilename, content);
+          console.log("Saved to " + outputFilename);
+        } catch (err) {
+          logError(err);
+          process.exit(1);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        logError(err);
+        process.exit(1);
+      });
   }
 }
 

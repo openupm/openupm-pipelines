@@ -6,6 +6,7 @@
  * required.
  */
 const compareVersions = require("compare-versions");
+const { logError } = require("./lib/logger");
 
 // Get dist tag, if localVer >= latestVer return latest, otherwise patch@localVer.
 const getDistTag = function (localVer, latestVer) {
@@ -21,7 +22,7 @@ const getDistTag = function (localVer, latestVer) {
 
 if (require.main === module) {
   if (process.argv.length < 4) {
-    console.log("Usage: node getDistTag.js <local_version> <latest_version>");
+    logError("Usage: node getDistTag.js <local_version> <latest_version>");
     process.exit(1);
   } else {
     console.log(getDistTag(process.argv[2], process.argv[3]));
