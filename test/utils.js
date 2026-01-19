@@ -2,16 +2,16 @@ const fse = require("fs-extra");
 const path = require("path");
 const os = require("os");
 
-const getTmpDir = function(pathToTmp) {
+const getTmpDir = function (pathToTmp) {
   return path.join(os.tmpdir(), pathToTmp);
 };
 
-const createTmpDir = function(pathToTmp) {
+const createTmpDir = function (pathToTmp) {
   const workDir = getTmpDir(pathToTmp);
   fse.mkdirpSync(workDir);
 };
 
-const removeTmpDir = function(pathToTmp) {
+const removeTmpDir = function (pathToTmp) {
   const cwd = getTmpDir(pathToTmp);
   fse.removeSync(cwd);
 };
@@ -19,5 +19,5 @@ const removeTmpDir = function(pathToTmp) {
 module.exports = {
   getTmpDir,
   createTmpDir,
-  removeTmpDir
+  removeTmpDir,
 };

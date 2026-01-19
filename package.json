@@ -4,7 +4,11 @@
   "version": "0.0.0",
   "description": "OpenUPM Pipelines",
   "scripts": {
-    "test": "cross-env NODE_ENV=test mocha"
+    "test": "cross-env NODE_ENV=test mocha",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:coverage": "c8 --check-coverage --lines 60 --functions 60 --branches 50 --statements 60 npm test"
   },
   "dependencies": {
     "compare-versions": "^3.6.0",
@@ -12,7 +16,10 @@
     "relative": "^3.0.2"
   },
   "devDependencies": {
+    "c8": "^10.1.2",
     "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
     "fs-extra": "^11.2.0",
     "mocha": "^10.2.0",
     "prettier": "^3.2.5",

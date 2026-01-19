@@ -25,7 +25,7 @@ const findPackage = function (packageName, searchPath) {
         }
         if (pkg.name != packageName) {
           console.debug(
-            `Mismatched package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`
+            `Mismatched package name in ${path.join(dirname, basename)}: actual=${pkg.name}, expected=${packageName}`,
           );
           return;
         }
@@ -47,7 +47,7 @@ const findPackage = function (packageName, searchPath) {
 if (require.main === module) {
   if (process.argv.length < 5) {
     console.log(
-      "Usage: node findPackage.js <pkg-name> <search-path> <output-filename>"
+      "Usage: node findPackage.js <pkg-name> <search-path> <output-filename>",
     );
     process.exit(1);
   } else {

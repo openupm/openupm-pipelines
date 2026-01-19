@@ -8,7 +8,7 @@
 const compareVersions = require("compare-versions");
 
 // Get dist tag, if localVer >= latestVer return latest, otherwise patch@localVer.
-const getDistTag = function(localVer, latestVer) {
+const getDistTag = function (localVer, latestVer) {
   try {
     let ret = compareVersions(localVer, latestVer);
     if (ret == 0 || ret == 1) return "latest";

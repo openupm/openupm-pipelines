@@ -1,7 +1,5 @@
 {
-  "files": [
-    "README.md"
-  ],
+  "files": ["README.md"],
   "imageSize": 100,
   "commit": false,
   "contributors": [
@@ -10,28 +8,21 @@
       "name": "Favo Yang",
       "avatar_url": "https://avatars.githubusercontent.com/u/125390?v=4",
       "profile": "http://littlebigfun.com",
-      "contributions": [
-        "code",
-        "maintenance"
-      ]
+      "contributions": ["code", "maintenance"]
     },
     {
       "login": "am1goo",
       "name": "Pavel \"am1goo\" Shestakov",
       "avatar_url": "https://avatars.githubusercontent.com/u/5287406?v=4",
       "profile": "https://gaijinent.com/",
-      "contributions": [
-        "code"
-      ]
+      "contributions": ["code"]
     },
     {
       "login": "James-Frowen",
       "name": "James Frowen",
       "avatar_url": "https://avatars.githubusercontent.com/u/23101891?v=4",
       "profile": "https://github.com/James-Frowen",
-      "contributions": [
-        "bug"
-      ]
+      "contributions": ["bug"]
     }
   ],
   "contributorsPerLine": 7,
