@@ -16,8 +16,13 @@ const removeTmpDir = function (pathToTmp) {
   fse.removeSync(cwd);
 };
 
+const writeJsonFile = function (filePath, data) {
+  fse.outputJsonSync(filePath, data);
+};
+
 module.exports = {
   getTmpDir,
   createTmpDir,
   removeTmpDir,
+  writeJsonFile,
 };
