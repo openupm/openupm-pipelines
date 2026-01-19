@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2021",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "types": ["node", "mocha"],
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "repo"]
+}

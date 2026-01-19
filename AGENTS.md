@@ -28,6 +28,7 @@
 - Run all tests with `npm test` before submitting changes.
 - When modifying files, run `npm run lint` and `npm run format`.
 - Before committing, run `npm run format:check`.
+- Run `npm run typecheck` when type-related changes are made (JSDoc/tsconfig).
 
 ## Commit & Pull Request Guidelines
 
