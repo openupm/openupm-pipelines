@@ -9,7 +9,8 @@ const compareVersions = require("compare-versions");
 const { logError } = require("./lib/logger");
 
 /**
- * Get dist tag, if localVer >= latestVer return latest, otherwise patch@localVer.
+ * Get dist tag, if localVer >= latestVer return latest, otherwise
+ * return a sanitized patch tag compatible with npm tag name constraints.
  * @param {string} localVer
  * @param {string} latestVer
  * @returns {string}
@@ -18,7 +19,7 @@ const getDistTag = function (localVer, latestVer) {
   try {
     let ret = compareVersions(localVer, latestVer);
     if (ret == 0 || ret == 1) return "latest";
-    else return `patch@${localVer}`;
+    else return `patch@${localVer}`.replace(/[^a-zA-Z0-9-._~]/g, "-");
   } catch (err) {
     // Not valid semver, always return latest.
     return "latest";

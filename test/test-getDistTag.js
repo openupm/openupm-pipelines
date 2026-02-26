@@ -13,10 +13,10 @@ describe("getDistTag.js", function () {
       getDistTag("1.0.0.0.0", "1.0.0").should.equal("latest");
     });
     it("lower local version", function () {
-      getDistTag("0.9.0", "1.0.0").should.equal("patch@0.9.0");
-      getDistTag("1.0.0", "1.0.1").should.equal("patch@1.0.0");
+      getDistTag("0.9.0", "1.0.0").should.equal("patch-0.9.0");
+      getDistTag("1.0.0", "1.0.1").should.equal("patch-1.0.0");
       getDistTag("1.0.0-preview-5", "1.0.0").should.equal(
-        "patch@1.0.0-preview-5",
+        "patch-1.0.0-preview-5",
       );
     });
     it("higher local version", function () {
