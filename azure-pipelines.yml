@@ -66,7 +66,11 @@ steps:
       git config --global url."https://".insteadOf git://
     displayName: Git config
 
-  - script: GIT_CLONE_PROTECTION_ACTIVE=false git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+  - script: |
+      GIT_CLONE_PROTECTION_ACTIVE=false git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
+      cd "$(repoDir)"
+      git lfs pull
+      git submodule foreach --recursive 'git lfs pull || true'
     displayName: "Clone to $(repoDir) repository"
 
   - script: |
