@@ -67,10 +67,11 @@ steps:
     displayName: Git config
 
   - script: |
+      set -euo pipefail
       GIT_CLONE_PROTECTION_ACTIVE=false git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
       cd "$(repoDir)"
       git lfs pull
-      git submodule foreach --recursive 'git lfs pull || true'
+      git submodule foreach --recursive 'git lfs pull'
     displayName: "Clone to $(repoDir) repository"
 
   - script: |
