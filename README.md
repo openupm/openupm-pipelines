@@ -2,9 +2,20 @@
 
 A customized proxy builder to build and publish upm package using `Azure Pipelines`.
 
+## Security
+
+The pipeline uses two stages. `BuildPackage` runs upstream package lifecycle
+hooks inside a container job, packs the package into a `.tgz`, and publishes
+that tarball as a pipeline artifact. `PublishPackage` downloads the tarball,
+verifies its SHA-256, and publishes it with `npm publish --ignore-scripts`.
+
+This keeps compatibility with packages that rely on `prepack` or
+`prepublishOnly` while keeping the OpenUPM publish credential out of the
+untrusted build stage.
+
 ## Prepare Azure
 
-Prepare a service connection
+Prepare an npm service connection:
 
 - Visit https://dev.azure.com/openupm/openupm
 - Project settings > Service connections > New service connection > npm
@@ -14,30 +25,37 @@ Prepare a service connection
 
 ## Build with REST API
 
-Required variables
+Required `parameters` payload:
 
-    {
-        repo_url: 'https://...',
-        repo_branch: 'master',
-        package_name: 'com.yourcompany.package...'
-    }
+```json
+{
+  "repoUrl": "https://...",
+  "repoBranch": "master",
+  "packageName": "com.yourcompany.package...",
+  "packageVersion": "1.2.3"
+}
+```
 
-If no variables are provided, the build will be [abort as failed](https://github.com/lextm/vstsabort).
+If no variables are provided, the build is aborted as failed via
+[`vstsabort`](https://github.com/lextm/vstsabort).
 
-Api reference: [azure-devops-rest-5.1](https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-5.1).
+API reference:
+[`azure-devops-rest-5.1`](https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-5.1)
 
 ```bash
-http --ignore-stdin \
-  -v \
-  -a username:token \
-  post https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1 \
-  definition:='{ "id": 1 }' \
-  parameters:='"{ \"repo_url\": \"https://...\", ... }"'
+curl --verbose \
+  --user "username:token" \
+  --request POST \
+  "https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1" \
+  --json '{
+    "definition": { "id": 1 },
+    "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\"}"
+  }'
 ```
 
 The `parameters` argument is [a stringified dictionary](https://stackoverflow.com/questions/34343084/start-a-build-and-passing-variables-through-vsts-rest-api/36339920#36339920).
 
-## Build with azure-devops-node-api
+## Build with `azure-devops-node-api`
 
 https://github.com/Microsoft/azure-devops-node-api
 
@@ -60,7 +78,10 @@ const buildPipelines = async function () {
     parameters:
       JSON.stringify(
         {
-          repo_url: 'https://...',
+          repoUrl: 'https://...',
+          repoBranch: 'master',
+          packageName: 'com.yourcompany.package...',
+          packageVersion: '1.2.3',
           ...
         }
       )
