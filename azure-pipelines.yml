@@ -364,6 +364,13 @@ stages:
                 "registry=$(verdaccioUrl)" \
                 "always-auth=false" \
                 >"$NPM_USERCONFIG_PATH"
+              echo "Logging in to Verdaccio with disposable e2e credentials"
+              printf '%s\n%s\n%s\n' \
+                "openupm-e2e" \
+                "openupm-e2e-password" \
+                "e2e@example.invalid" \
+                | NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
+                  npm adduser --registry="$(verdaccioUrl)" --auth-type=legacy
               echo "Publishing $(packageTarball) to $(verdaccioUrl)"
               NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
                 npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"
