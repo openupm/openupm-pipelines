@@ -7,12 +7,12 @@ uplinks:
 packages:
   "@*/*":
     access: $all
-    publish: $anonymous
+    publish: $authenticated
     unpublish: $all
     proxy: npmjs
   "**":
     access: $all
-    publish: $anonymous
+    publish: $authenticated
     unpublish: $all
     proxy: npmjs
 
