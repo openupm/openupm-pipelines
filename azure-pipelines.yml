@@ -27,6 +27,7 @@ resources:
   containers:
     - container: build_image
       image: node:${{ variables.nodeMajorVersion }}-bookworm
+      options: --user 0:0
 
 stages:
   - stage: BuildPackage
