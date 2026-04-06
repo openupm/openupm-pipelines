@@ -4,10 +4,14 @@ A customized proxy builder to build and publish upm package using `Azure Pipelin
 
 ## Security
 
-The pipeline uses two stages. `BuildPackage` runs upstream package lifecycle
-hooks inside a container job, packs the package into a `.tgz`, and publishes
-that tarball as a pipeline artifact. `PublishPackage` downloads the tarball,
-verifies its SHA-256, and publishes it with `npm publish --ignore-scripts`.
+The pipeline uses a containerized `BuildPackage` stage and then routes the
+packed tarball into one of two publish stages:
+
+- normal publish: `PublishPackage` publishes to OpenUPM
+- e2e publish: `PublishE2EPackage` publishes to a local Verdaccio registry
+
+Both publish stages consume the tarball artifact and use
+`npm publish --ignore-scripts`.
 
 This keeps compatibility with packages that rely on `prepack` or
 `prepublishOnly` while keeping the OpenUPM publish credential out of the
@@ -32,9 +36,14 @@ Required `parameters` payload:
   "repoUrl": "https://...",
   "repoBranch": "master",
   "packageName": "com.yourcompany.package...",
-  "packageVersion": "1.2.3"
+  "packageVersion": "1.2.3",
+  "e2eTest": "false"
 }
 ```
+
+`e2eTest` is optional and defaults to `false`. Set it to `"true"` to route the
+run to the Verdaccio-based end-to-end publish test instead of the normal
+OpenUPM publish stage.
 
 If no variables are provided, the build is aborted as failed via
 [`vstsabort`](https://github.com/lextm/vstsabort).
@@ -56,11 +65,52 @@ curl --verbose \
   "https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1" \
   --json '{
     "definition": { "id": 1 },
-    "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\"}"
+    "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"e2eTest\":\"false\"}"
   }'
 ```
 
 The `parameters` argument is [a stringified dictionary](https://stackoverflow.com/questions/34343084/start-a-build-and-passing-variables-through-vsts-rest-api/36339920#36339920).
+
+When queueing the pipeline through the REST API, the run uses the pipeline's
+default branch unless you override the self repository ref explicitly. This is
+important when testing changes from a non-default branch of
+`openupm-pipelines`:
+
+```json
+{
+  "definition": { "id": 1 },
+  "resources": {
+    "repositories": {
+      "self": {
+        "refName": "refs/heads/your-branch-name"
+      }
+    }
+  },
+  "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"e2eTest\":\"false\"}"
+}
+```
+
+## Manual E2E Fixture
+
+Use this fixture for manual end-to-end testing:
+
+```json
+{
+  "repoUrl": "https://github.com/favoyang/com.example.nuget-consumer",
+  "repoBranch": "1.0.1",
+  "packageName": "com.example.nuget-consumer",
+  "packageVersion": "1.0.1",
+  "e2eTest": "true"
+}
+```
+
+When testing pipeline changes from a branch, queue the run via REST API and set
+`resources.repositories.self.refName` to that branch so Azure uses your branch
+version of `azure-pipelines.yml`.
+
+When running the e2e path, the pipeline publishes the tarball to a local
+Verdaccio instance with anonymous publish access and then prints the published
+metadata plus the Verdaccio storage contents into the job log.
 
 ## Build with `azure-devops-node-api`
 
@@ -89,6 +139,7 @@ const buildPipelines = async function () {
           repoBranch: 'master',
           packageName: 'com.yourcompany.package...',
           packageVersion: '1.2.3',
+          e2eTest: 'false',
           ...
         }
       )

@@ -9,12 +9,16 @@ variables:
   # repoBranch: master
   # packageName: com.namespace.pkgname
   # packageVersion: semver
+  # e2eTest: true|false
 
   ### pre-defined variables
   repoDir: repo
   artifactName: package-artifact
   registryUrl: https://package.openupm.com
+  verdaccioPort: "4873"
+  verdaccioUrl: "http://127.0.0.1:4873"
   distTag: latest
+  e2eTest: "false"
   nodeMajorVersion: "22"
   gitHomeDir: $(Pipeline.Workspace)/git-home
   gitConfigDir: $(Pipeline.Workspace)/git-xdg
@@ -39,12 +43,24 @@ stages:
               echo repoBranch: $REPOBRANCH
               echo packageName: $PACKAGENAME
               echo packageVersion: $PACKAGEVERSION
+              echo e2eTest: $E2ETEST
               [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
               [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
               [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
               [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
               echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
             displayName: "Prepare context variables"
+
+          - script: |
+              set -euo pipefail
+              if [ "$(e2eTest)" = "true" ]; then
+                TARGET_REGISTRY="$(verdaccioUrl)"
+              else
+                TARGET_REGISTRY="$(registryUrl)"
+              fi
+              echo "Resolved publish registry: $TARGET_REGISTRY"
+              echo "##vso[task.setvariable variable=publishRegistryUrl;]$TARGET_REGISTRY"
+            displayName: "Resolve publish target"
 
           - script: |
               set -euo pipefail
@@ -131,7 +147,7 @@ stages:
 
           - script: |
               set -euo pipefail
-              LATEST_VERSION=$(npm --registry="$(registryUrl)" show "$(packageName)" version) || LATEST_VERSION=0.0.0
+              LATEST_VERSION=$(npm --registry="$(publishRegistryUrl)" show "$(packageName)" version) || LATEST_VERSION=0.0.0
               [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
               echo LATEST_VERSION: $LATEST_VERSION
               echo packageVersion: $(packageVersion)
@@ -152,7 +168,7 @@ stages:
           - script: |
               set -euo pipefail
               cd "$(packageFolder)"
-              npm pkg set publishConfig.registry="$(registryUrl)"
+              npm pkg set publishConfig.registry="$(publishRegistryUrl)"
               cat package.json
             displayName: "Override publishConfig"
 
@@ -179,6 +195,7 @@ stages:
   - stage: PublishPackage
     displayName: "Publish package tarball"
     dependsOn: BuildPackage
+    condition: and(succeeded(), ne(variables['e2eTest'], 'true'))
     jobs:
       - job: PublishPackage
         displayName: "Publish package tarball"
@@ -241,3 +258,120 @@ stages:
               customCommand: "publish $(packageTarball) --ignore-scripts --tag=$(distTag) --registry=$(registryUrl)"
               customEndpoint: openupm
             displayName: "Publish to OpenUPM"
+
+  - stage: PublishE2EPackage
+    displayName: "Publish package tarball to Verdaccio"
+    dependsOn: BuildPackage
+    condition: and(succeeded(), eq(variables['e2eTest'], 'true'))
+    jobs:
+      - job: PublishE2EPackage
+        displayName: "Publish package tarball to Verdaccio"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - download: current
+            artifact: $(artifactName)
+            displayName: "Download package artifact"
+
+          - script: |
+              set -euo pipefail
+              ARTIFACT_DIR="$(Pipeline.Workspace)/$(artifactName)"
+              METADATA_FILE="$ARTIFACT_DIR/metadata.json"
+              TARBALL_FILE=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballFile);' "$METADATA_FILE")
+              EXPECTED_SHA256=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballSha256);' "$METADATA_FILE")
+              PACKAGE_NAME=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.packageName);' "$METADATA_FILE")
+              PACKAGE_VERSION=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.packageVersion);' "$METADATA_FILE")
+              DIST_TAG=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.distTag);' "$METADATA_FILE")
+              ACTUAL_SHA256=$(sha256sum "$ARTIFACT_DIR/$TARBALL_FILE" | awk '{print $1}')
+              if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+                echo "Tarball SHA-256 mismatch"
+                echo "expected: $EXPECTED_SHA256"
+                echo "actual:   $ACTUAL_SHA256"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=packageTarball;]$ARTIFACT_DIR/$TARBALL_FILE"
+              echo "##vso[task.setvariable variable=packageNameFromArtifact;]$PACKAGE_NAME"
+              echo "##vso[task.setvariable variable=packageVersionFromArtifact;]$PACKAGE_VERSION"
+              echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+            displayName: "Verify package artifact"
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(nodeMajorVersion).x"
+            displayName: "Install Node.js"
+
+          - script: |
+              set -euo pipefail
+              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
+              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
+              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
+                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "configured: $(nodeMajorVersion)"
+                echo "package.json: $EXPECTED_NODE_MAJOR"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
+            displayName: "Read tool versions"
+
+          - script: |
+              set -euo pipefail
+              echo "Upgrading npm to $(npmVersion) for e2e publish tooling"
+              npm install -g "npm@$(npmVersion)"
+            displayName: "Upgrade npm"
+
+          - script: |
+              set -euo pipefail
+              VERDACCIO_STORAGE_DIR="$(Pipeline.Workspace)/verdaccio-storage"
+              mkdir -p "$VERDACCIO_STORAGE_DIR"
+              echo "Starting Verdaccio on $(verdaccioUrl)"
+              docker run -d --rm \
+                --name verdaccio-e2e \
+                -p "$(verdaccioPort):4873" \
+                -v "$(Build.SourcesDirectory)/test/verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro" \
+                -v "$VERDACCIO_STORAGE_DIR:/verdaccio/storage" \
+                verdaccio/verdaccio:6
+            displayName: "Start Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              echo "Waiting for Verdaccio readiness at $(verdaccioUrl)"
+              for _ in $(seq 1 30); do
+                if curl --silent --fail "$(verdaccioUrl)/-/ping" >/dev/null; then
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "Verdaccio did not become ready"
+              docker logs verdaccio-e2e || true
+              exit 1
+            displayName: "Wait for Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              NPM_USERCONFIG_PATH="$(Pipeline.Workspace)/verdaccio.npmrc"
+              printf '%s\n' \
+                "registry=$(verdaccioUrl)" \
+                "//127.0.0.1:$(verdaccioPort)/:_authToken=" \
+                "always-auth=false" \
+                >"$NPM_USERCONFIG_PATH"
+              echo "Publishing $(packageTarball) to $(verdaccioUrl)"
+              NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
+                npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"
+            displayName: "Publish to Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              echo "Published package metadata from Verdaccio:"
+              npm view "$(packageNameFromArtifact)" --registry="$(verdaccioUrl)" --json
+              echo "Verdaccio storage files:"
+              find "$(Pipeline.Workspace)/verdaccio-storage" -type f | sort
+            displayName: "Print Verdaccio registry content"
+
+          - script: |
+              set -euo pipefail
+              docker logs verdaccio-e2e || true
+              docker rm -f verdaccio-e2e || true
+            condition: always()
+            displayName: "Stop Verdaccio"
