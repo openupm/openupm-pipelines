@@ -334,6 +334,7 @@ stages:
               set -euo pipefail
               VERDACCIO_STORAGE_DIR="$(Pipeline.Workspace)/verdaccio-storage"
               mkdir -p "$VERDACCIO_STORAGE_DIR"
+              chmod 0777 "$VERDACCIO_STORAGE_DIR"
               echo "Starting Verdaccio on $(verdaccioUrl)"
               docker run -d --rm \
                 --name verdaccio-e2e \
