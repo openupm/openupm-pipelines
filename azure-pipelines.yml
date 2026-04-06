@@ -184,8 +184,14 @@ stages:
               mkdir -p "$ARTIFACT_DIR"
               cd "$(packageFolder)"
               echo "Packing tarball from $(packageFolder)"
-              TARBALL_FILE=$(npm pack --json | node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(0,"utf8")); console.log(result[0].filename);')
-              cp "$TARBALL_FILE" "$ARTIFACT_DIR/$TARBALL_FILE"
+              npm pack --pack-destination "$ARTIFACT_DIR"
+              mapfile -t TARBALL_PATHS < <(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.tgz' | sort)
+              if [ "${#TARBALL_PATHS[@]}" -ne 1 ]; then
+                echo "Expected exactly one tarball in $ARTIFACT_DIR after npm pack"
+                find "$ARTIFACT_DIR" -maxdepth 1 -type f | sort
+                exit 1
+              fi
+              TARBALL_FILE=$(basename "${TARBALL_PATHS[0]}")
               node "$(Build.SourcesDirectory)/createPackageArtifactMetadata.js" \
                 . \
                 "$ARTIFACT_DIR/$TARBALL_FILE" \
@@ -361,20 +367,13 @@ stages:
           - script: |
               set -euo pipefail
               NPM_USERCONFIG_PATH="$(Pipeline.Workspace)/verdaccio.npmrc"
-              LOGIN_TOOL_DIR="$(Pipeline.Workspace)/verdaccio-login-tools"
-              printf '%s\n' \
-                "registry=$(verdaccioUrl)" \
-                "always-auth=false" \
-                >"$NPM_USERCONFIG_PATH"
               echo "Logging in to Verdaccio with disposable e2e credentials"
-              mkdir -p "$LOGIN_TOOL_DIR"
-              npm install --prefix "$LOGIN_TOOL_DIR" npm-cli-login@1.0.0
-              NPM_USER="openupm-e2e" \
-                NPM_PASS="openupm-e2e-password" \
-                NPM_EMAIL="e2e@example.invalid" \
-                NPM_REGISTRY="$(verdaccioUrl)" \
-                NPM_RC_PATH="$NPM_USERCONFIG_PATH" \
-                "$LOGIN_TOOL_DIR/node_modules/.bin/npm-cli-login"
+              node "$(Build.SourcesDirectory)/configureVerdaccioNpmrc.js" \
+                "$(verdaccioUrl)" \
+                "openupm-e2e" \
+                "openupm-e2e-password" \
+                "e2e@example.invalid" \
+                "$NPM_USERCONFIG_PATH"
               echo "Publishing $(packageTarball) to $(verdaccioUrl)"
               NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
                 npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"

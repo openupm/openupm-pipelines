@@ -62,7 +62,7 @@
   `e2eTest=true`
 - Manual normal-publish validation should use `e2eTest=false` with a package
   version that is already published to OpenUPM. The expected result is a `409
-  Conflict` from the publish step.
+Conflict` from the publish step.
 
 ## Security Notes
 
