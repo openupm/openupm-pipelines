@@ -362,7 +362,6 @@ stages:
               NPM_USERCONFIG_PATH="$(Pipeline.Workspace)/verdaccio.npmrc"
               printf '%s\n' \
                 "registry=$(verdaccioUrl)" \
-                "//127.0.0.1:$(verdaccioPort)/:_authToken=" \
                 "always-auth=false" \
                 >"$NPM_USERCONFIG_PATH"
               echo "Publishing $(packageTarball) to $(verdaccioUrl)"
