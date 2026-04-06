@@ -42,9 +42,16 @@ If no variables are provided, the build is aborted as failed via
 API reference:
 [`azure-devops-rest-5.1`](https://docs.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-5.1)
 
+Set your Azure DevOps Personal Access Token in the environment before calling the
+API:
+
+```bash
+export AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE="your-personal-access-token"
+```
+
 ```bash
 curl --verbose \
-  --user "username:token" \
+  --user ":$AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE" \
   --request POST \
   "https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1" \
   --json '{
@@ -62,7 +69,7 @@ https://github.com/Microsoft/azure-devops-node-api
 ```javascript
 const azureDevops = require("azure-devops-node-api");
 
-const token = '';
+const token = process.env.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE;
 const endpoint = 'https://dev.azure.com/openupm';
 const definitionId = 1;
 const project = 'openupm';
