@@ -20,6 +20,7 @@ variables:
   distTag: latest
   e2eTest: "false"
   nodeMajorVersion: "22"
+  npmToolDir: $(Pipeline.Workspace)/npm-tools
   gitHomeDir: $(Pipeline.Workspace)/git-home
   gitConfigDir: $(Pipeline.Workspace)/git-xdg
 
@@ -86,8 +87,11 @@ stages:
 
           - script: |
               set -euo pipefail
+              mkdir -p "$(npmToolDir)"
               echo "Upgrading npm to $(npmVersion) for pipeline tooling"
-              npm install -g "npm@$(npmVersion)"
+              npm install --prefix "$(npmToolDir)" "npm@$(npmVersion)"
+              echo "##vso[task.prependpath]$(npmToolDir)/node_modules/.bin"
+              npm --version
             displayName: "Upgrade npm"
 
           - script: |
@@ -147,6 +151,7 @@ stages:
 
           - script: |
               set -euo pipefail
+              echo "Computing dist-tag for $(packageName) against $(publishRegistryUrl)"
               LATEST_VERSION=$(npm --registry="$(publishRegistryUrl)" show "$(packageName)" version) || LATEST_VERSION=0.0.0
               [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
               echo LATEST_VERSION: $LATEST_VERSION
@@ -158,6 +163,7 @@ stages:
 
           - script: |
               set -euo pipefail
+              echo "Locating package manifest in $(repoDir) for $(packageName)"
               echo Locate package.json for: $(packageName)
               node findPackage.js "$(packageName)" "$(repoDir)" result.json
               PACKAGEFOLDER=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync("result.json","utf8")); console.log(result.dirname);')
@@ -168,6 +174,7 @@ stages:
           - script: |
               set -euo pipefail
               cd "$(packageFolder)"
+              echo "Overriding publishConfig.registry in $(packageFolder)"
               npm pkg set publishConfig.registry="$(publishRegistryUrl)"
               cat package.json
             displayName: "Override publishConfig"
@@ -317,8 +324,11 @@ stages:
 
           - script: |
               set -euo pipefail
+              mkdir -p "$(npmToolDir)"
               echo "Upgrading npm to $(npmVersion) for e2e publish tooling"
-              npm install -g "npm@$(npmVersion)"
+              npm install --prefix "$(npmToolDir)" "npm@$(npmVersion)"
+              echo "##vso[task.prependpath]$(npmToolDir)/node_modules/.bin"
+              npm --version
             displayName: "Upgrade npm"
 
           - script: |
