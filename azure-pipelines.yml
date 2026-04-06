@@ -360,17 +360,20 @@ stages:
           - script: |
               set -euo pipefail
               NPM_USERCONFIG_PATH="$(Pipeline.Workspace)/verdaccio.npmrc"
+              LOGIN_TOOL_DIR="$(Pipeline.Workspace)/verdaccio-login-tools"
               printf '%s\n' \
                 "registry=$(verdaccioUrl)" \
                 "always-auth=false" \
                 >"$NPM_USERCONFIG_PATH"
               echo "Logging in to Verdaccio with disposable e2e credentials"
-              printf '%s\n%s\n%s\n' \
-                "openupm-e2e" \
-                "openupm-e2e-password" \
-                "e2e@example.invalid" \
-                | NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
-                  npm adduser --registry="$(verdaccioUrl)" --auth-type=legacy
+              mkdir -p "$LOGIN_TOOL_DIR"
+              npm install --prefix "$LOGIN_TOOL_DIR" npm-cli-login@1.0.0
+              NPM_USER="openupm-e2e" \
+                NPM_PASS="openupm-e2e-password" \
+                NPM_EMAIL="e2e@example.invalid" \
+                NPM_REGISTRY="$(verdaccioUrl)" \
+                NPM_RC_PATH="$NPM_USERCONFIG_PATH" \
+                "$LOGIN_TOOL_DIR/node_modules/.bin/npm-cli-login"
               echo "Publishing $(packageTarball) to $(verdaccioUrl)"
               NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
                 npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"
