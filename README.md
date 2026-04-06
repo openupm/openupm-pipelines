@@ -72,20 +72,13 @@ curl --verbose \
 The `parameters` argument is [a stringified dictionary](https://stackoverflow.com/questions/34343084/start-a-build-and-passing-variables-through-vsts-rest-api/36339920#36339920).
 
 When queueing the pipeline through the REST API, the run uses the pipeline's
-default branch unless you override the self repository ref explicitly. This is
-important when testing changes from a non-default branch of
-`openupm-pipelines`:
+default branch unless you override `sourceBranch`. This is important when
+testing changes from a non-default branch of `openupm-pipelines`:
 
 ```json
 {
   "definition": { "id": 1 },
-  "resources": {
-    "repositories": {
-      "self": {
-        "refName": "refs/heads/your-branch-name"
-      }
-    }
-  },
+  "sourceBranch": "refs/heads/your-branch-name",
   "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"e2eTest\":\"false\"}"
 }
 ```
@@ -105,12 +98,17 @@ Use this fixture for manual end-to-end testing:
 ```
 
 When testing pipeline changes from a branch, queue the run via REST API and set
-`resources.repositories.self.refName` to that branch so Azure uses your branch
-version of `azure-pipelines.yml`.
+`sourceBranch` to that branch so Azure uses your branch version of
+`azure-pipelines.yml`.
 
 When running the e2e path, the pipeline publishes the tarball to a local
 Verdaccio instance with anonymous publish access and then prints the published
 metadata plus the Verdaccio storage contents into the job log.
+
+For a manual check of the normal OpenUPM path, queue the same package/version
+with `e2eTest=false` only when that version is already published. The expected
+result for that validation run is an OpenUPM publish failure with HTTP `409
+Conflict`, which confirms the pipeline stayed on the real registry path.
 
 ## Build with `azure-devops-node-api`
 
@@ -132,6 +130,7 @@ const buildPipelines = async function () {
     definition: {
       id: definitionId
     },
+    sourceBranch: 'refs/heads/your-branch-name',
     parameters:
       JSON.stringify(
         {

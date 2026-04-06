@@ -52,7 +52,7 @@
 - Keep clone/LFS/submodule operations in explicit script steps so their stderr/stdout remains parsable in Azure logs.
 - If Git LFS behavior changes, check both the container image contents and the effective Git config seen inside `BuildPackage`.
 - If a pipeline tool version changes, verify both the YAML `nodeMajorVersion` and the `package.json` Volta values.
-- When queueing Azure via REST API from a non-default branch of this repo, set `resources.repositories.self.refName` so the run uses that branch's pipeline definition instead of the default branch.
+- When queueing Azure via REST API from a non-default branch of this repo, set `sourceBranch` so the run uses that branch's pipeline definition instead of the default branch.
 - Verdaccio e2e config lives at `test/verdaccio/config.yaml`.
 - Manual e2e fixture for this repo:
   `repoUrl=https://github.com/favoyang/com.example.nuget-consumer`
@@ -60,6 +60,9 @@
   `packageName=com.example.nuget-consumer`
   `packageVersion=1.0.1`
   `e2eTest=true`
+- Manual normal-publish validation should use `e2eTest=false` with a package
+  version that is already published to OpenUPM. The expected result is a `409
+  Conflict` from the publish step.
 
 ## Security Notes
 
