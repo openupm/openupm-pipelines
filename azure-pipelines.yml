@@ -26,7 +26,7 @@ variables:
 resources:
   containers:
     - container: build_image
-      image: node:${{ variables.nodeMajorVersion }}-bookworm
+      image: mcr.microsoft.com/devcontainers/javascript-node:1-${{ variables.nodeMajorVersion }}-bookworm
 
 stages:
   - stage: BuildPackage
