@@ -27,7 +27,6 @@ resources:
   containers:
     - container: build_image
       image: node:${{ variables.nodeMajorVersion }}-bookworm
-      options: --user 0:0
 
 stages:
   - stage: BuildPackage
@@ -80,9 +79,9 @@ stages:
 
           - script: |
               set -euo pipefail
-              apt-get update
-              apt-get install -y git git-lfs
-              git lfs install --system
+              sudo apt-get update
+              sudo apt-get install -y git git-lfs
+              sudo git lfs install --system
             displayName: "Install Git tooling"
 
           - script: |
