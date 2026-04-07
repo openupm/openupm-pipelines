@@ -105,6 +105,29 @@ When running the e2e path, the pipeline publishes the tarball to a local
 Verdaccio instance with anonymous publish access and then prints the published
 metadata plus the Verdaccio storage contents into the job log.
 
+To queue that documented fixture from the current branch and stream the relevant
+Azure logs automatically, run:
+
+```bash
+npm run test:e2e:azure
+```
+
+This helper expects `AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE` in the environment.
+It defaults to the documented `e2eTest=true` fixture and uses the current Git
+branch as `sourceBranch`. To run the normal OpenUPM validation instead, use:
+
+```bash
+node scripts/runAzureFixture.js --e2e-test false
+```
+
+That mode expects the duplicate-version `409 Conflict` failure and exits
+successfully only when it observes that result.
+
+GitHub Actions also runs this helper in a separate `Azure E2E` job when the
+repository secret `AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE` is configured. That job
+is intentionally separate from the normal unit-test job because it is a
+credentialed integration test against Azure Pipelines.
+
 For a manual check of the normal OpenUPM path, queue the same package/version
 with `e2eTest=false` only when that version is already published. The expected
 result for that validation run is an OpenUPM publish failure with HTTP `409

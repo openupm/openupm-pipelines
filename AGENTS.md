@@ -60,6 +60,13 @@
   `packageName=com.example.nuget-consumer`
   `packageVersion=1.0.1`
   `e2eTest=true`
+- Use `npm run test:e2e:azure` to queue the documented Azure fixture from the
+  current branch and print the relevant publish logs automatically.
+- Use `node scripts/runAzureFixture.js --e2e-test false` for the normal publish
+  validation that expects `409 Conflict`.
+- GitHub Actions runs the Azure-backed helper in a separate `Azure E2E` job
+  only when the `AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE` repository secret is
+  available.
 - Manual normal-publish validation should use `e2eTest=false` with a package
   version that is already published to OpenUPM. The expected result is a `409
 Conflict` from the publish step.
