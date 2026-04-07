@@ -9,103 +9,387 @@ variables:
   # repoBranch: master
   # packageName: com.namespace.pkgname
   # packageVersion: semver
+  # e2eTest: true|false
 
   ### pre-defined variables
   repoDir: repo
+  artifactName: package-artifact
   registryUrl: https://package.openupm.com
+  verdaccioPort: "4873"
+  verdaccioUrl: "http://127.0.0.1:4873"
   distTag: latest
+  nodeMajorVersion: "22"
+  npmToolDir: $(Pipeline.Workspace)/npm-tools
+  gitHomeDir: $(Pipeline.Workspace)/git-home
+  gitConfigDir: $(Pipeline.Workspace)/git-xdg
 
-  ### dynamic variables
-  # distTag: latest
-  # packageFolder: path-to-package.json
+resources:
+  containers:
+    - container: build_image
+      image: mcr.microsoft.com/devcontainers/javascript-node:1-${{ variables.nodeMajorVersion }}-bookworm
 
-pool:
-  vmImage: "ubuntu-latest"
+stages:
+  - stage: BuildPackage
+    displayName: "Build package tarball"
+    jobs:
+      - job: BuildPackage
+        displayName: "Build package tarball"
+        pool:
+          vmImage: "ubuntu-latest"
+        container: build_image
+        steps:
+          - script: |
+              echo repoUrl: $REPOURL
+              echo repoBranch: $REPOBRANCH
+              echo packageName: $PACKAGENAME
+              echo packageVersion: $PACKAGEVERSION
+              echo e2eTest: ${E2ETEST:-false}
+              [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
+              [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
+              [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
+              [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
+              echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
+            displayName: "Prepare context variables"
 
-steps:
-  - script: |
-      echo repoUrl: $REPOURL
-      echo repoBranch: $REPOBRANCH
-      echo packageName: $PACKAGENAME
-      echo packageVersion: $PACKAGEVERSION
-      [[ -z "$REPOURL" ]] && echo 'variable repoUrl not found' && exit 1
-      [[ -z "$REPOBRANCH" ]] && echo 'variable repoBranch not found' && exit 1
-      [[ -z "$PACKAGENAME" ]] && echo 'variable packageName not found' && exit 1
-      [[ -z "$PACKAGEVERSION" ]] && echo 'variable packageVersion not found' && exit 1
-      echo "##vso[task.setvariable variable=NODE_OPTIONS]--max_old_space_size=2048"
-      exit 0
-    displayName: "Prepare context variables"
+          - script: |
+              set -euo pipefail
+              if [ "${E2ETEST:-false}" = "true" ]; then
+                TARGET_REGISTRY="$(verdaccioUrl)"
+              else
+                TARGET_REGISTRY="$(registryUrl)"
+              fi
+              echo "Resolved publish registry: $TARGET_REGISTRY"
+              echo "##vso[task.setvariable variable=publishRegistryUrl;]$TARGET_REGISTRY"
+            displayName: "Resolve publish target"
 
-  - script: |
-      echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
-    displayName: "Update build number"
+          - script: |
+              set -euo pipefail
+              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
+              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
+              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
+                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "configured: $(nodeMajorVersion)"
+                echo "package.json: $EXPECTED_NODE_MAJOR"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
+            displayName: "Read tool versions"
 
-  - task: NodeTool@0
-    inputs:
-      versionSpec: "22.x"
-    displayName: "Install Node.js"
+          - script: |
+              set -euo pipefail
+              sudo apt-get update
+              sudo apt-get install -y git git-lfs
+              sudo git lfs install --system
+            displayName: "Install Git tooling"
 
-  - task: Npm@1
-    inputs:
-      command: custom
-      customCommand: "install -g npm@10.9.4"
-    displayName: "Upgrade npm"
+          - script: |
+              set -euo pipefail
+              mkdir -p "$(npmToolDir)"
+              echo "Upgrading npm to $(npmVersion) for pipeline tooling"
+              npm install --prefix "$(npmToolDir)" "npm@$(npmVersion)"
+              echo "##vso[task.prependpath]$(npmToolDir)/node_modules/.bin"
+              npm --version
+            displayName: "Upgrade npm"
 
-  - task: Npm@1
-    inputs:
-      command: "ci"
-    displayName: "Install dependencies"
+          - script: |
+              set -euo pipefail
+              echo "Installing pipeline dependencies for helper scripts"
+              HUSKY=0 npm ci
+            displayName: "Install pipeline dependencies"
 
-  - task: DeleteFiles@1
-    inputs:
-      contents: $(repoDir)
-    displayName: "Clean $(repoDir) folder"
+          - task: DeleteFiles@1
+            inputs:
+              contents: $(repoDir)
+            displayName: "Clean $(repoDir) folder"
 
-  - script: |
-      git config --global url."https://github.com/".insteadOf git@github.com:
-      git config --global url."https://".insteadOf git://
-    displayName: Git config
+          - script: |
+              set -euo pipefail
+              mkdir -p "$(gitHomeDir)" "$(gitConfigDir)"
+              git config --global --unset-all core.hooksPath || true
+              git config --global url."https://github.com/".insteadOf git@github.com:
+              git config --global url."https://".insteadOf git://
+            displayName: "Prepare isolated Git config"
+            env:
+              HOME: $(gitHomeDir)
+              XDG_CONFIG_HOME: $(gitConfigDir)
 
-  - script: |
-      set -euo pipefail
-      GIT_CLONE_PROTECTION_ACTIVE=false git clone --recursive --shallow-submodules --depth 1 --branch $(repoBranch) $(repoUrl) $(repoDir)
-      cd "$(repoDir)"
-      git lfs pull
-      git submodule foreach --recursive 'git lfs pull'
-    displayName: "Clone to $(repoDir) repository"
+          - script: |
+              set -euo pipefail
+              echo "Cloning $(repoUrl) @ $(repoBranch)"
+              GIT_CLONE_PROTECTION_ACTIVE=false git \
+                -c init.templateDir=/dev/null \
+                -c core.hooksPath=/dev/null \
+                clone --recursive --shallow-submodules --depth 1 --branch "$(repoBranch)" "$(repoUrl)" "$(repoDir)"
+              git -C "$(repoDir)" config --local core.hooksPath /dev/null
+            displayName: "Clone repository"
+            env:
+              HOME: $(gitHomeDir)
+              XDG_CONFIG_HOME: $(gitConfigDir)
 
-  - script: |
-      # Get LATEST_VERSION
-      LATEST_VERSION=`npm --registry=$(registryUrl) show $(packageName) version` || LATEST_VERSION=0.0.0
-      [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
-      echo LATEST_VERSION: $LATEST_VERSION
-      echo packageVersion: $(packageVersion)
-      # Get DIST_TAG
-      DIST_TAG=`node getDistTag.js $(packageVersion) $LATEST_VERSION`
-      echo DIST_TAG: $DIST_TAG
-      echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
-    displayName: "Set distTag variable"
+          - script: |
+              set -euo pipefail
+              cd "$(repoDir)"
+              echo "Fetching Git LFS objects for $(repoDir)"
+              git lfs pull
+            displayName: "Fetch Git LFS"
+            env:
+              HOME: $(gitHomeDir)
+              XDG_CONFIG_HOME: $(gitConfigDir)
 
-  - script: |
-      echo Locate package.json for: $(packageName)
-      node findPackage.js $(packageName) $(repoDir) result.json
-      PACKAGEFOLDER=$(cat result.json | npx json 'dirname')
-      echo "PACKAGEFOLDER: $PACKAGEFOLDER"
-      echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
-    displayName: "Detect package.json location"
+          - script: |
+              set -euo pipefail
+              cd "$(repoDir)"
+              echo "Fetching Git LFS objects for submodules in $(repoDir)"
+              git submodule foreach --recursive 'git lfs pull'
+            displayName: "Fetch submodule Git LFS"
+            env:
+              HOME: $(gitHomeDir)
+              XDG_CONFIG_HOME: $(gitConfigDir)
 
-  - script: |
-      cd "$(packageFolder)"
-      if [ -f "package.json" ]; then
-        npm pkg set publishConfig.registry="https://package.openupm.com"
-        cat package.json
-      fi
-    displayName: "Override publishConfig"
+          - script: |
+              set -euo pipefail
+              echo "Computing dist-tag for $(packageName) against $(publishRegistryUrl)"
+              LATEST_VERSION=$(npm --registry="$(publishRegistryUrl)" show "$(packageName)" version) || LATEST_VERSION=0.0.0
+              [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
+              echo LATEST_VERSION: $LATEST_VERSION
+              echo packageVersion: $(packageVersion)
+              DIST_TAG=$(node getDistTag.js "$(packageVersion)" "$LATEST_VERSION")
+              echo DIST_TAG: $DIST_TAG
+              echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+            displayName: "Set distTag variable"
 
-  - task: Npm@1
-    inputs:
-      command: custom
-      customCommand: "publish --tag=$(distTag) --registry=$(registryUrl)"
-      customEndpoint: openupm
-      workingDir: $(packageFolder)
-    displayName: "Publish to OpenUPM"
+          - script: |
+              set -euo pipefail
+              echo "Locating package manifest in $(repoDir) for $(packageName)"
+              echo Locate package.json for: $(packageName)
+              node findPackage.js "$(packageName)" "$(repoDir)" result.json
+              PACKAGEFOLDER=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync("result.json","utf8")); console.log(result.dirname);')
+              echo "PACKAGEFOLDER: $PACKAGEFOLDER"
+              echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
+            displayName: "Detect package.json location"
+
+          - script: |
+              set -euo pipefail
+              cd "$(packageFolder)"
+              echo "Overriding publishConfig.registry in $(packageFolder)"
+              npm pkg set publishConfig.registry="$(publishRegistryUrl)"
+              cat package.json
+            displayName: "Override publishConfig"
+
+          - script: |
+              set -euo pipefail
+              ARTIFACT_DIR="$(Build.ArtifactStagingDirectory)/$(artifactName)"
+              mkdir -p "$ARTIFACT_DIR"
+              cd "$(packageFolder)"
+              echo "Packing tarball from $(packageFolder)"
+              npm pack --pack-destination "$ARTIFACT_DIR"
+              mapfile -t TARBALL_PATHS < <(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.tgz' | sort)
+              if [ "${#TARBALL_PATHS[@]}" -ne 1 ]; then
+                echo "Expected exactly one tarball in $ARTIFACT_DIR after npm pack"
+                find "$ARTIFACT_DIR" -maxdepth 1 -type f | sort
+                exit 1
+              fi
+              TARBALL_FILE=$(basename "${TARBALL_PATHS[0]}")
+              node "$(Build.SourcesDirectory)/createPackageArtifactMetadata.js" \
+                . \
+                "$ARTIFACT_DIR/$TARBALL_FILE" \
+                "$(distTag)" \
+                "$ARTIFACT_DIR/metadata.json"
+              cat "$ARTIFACT_DIR/metadata.json"
+            displayName: "Pack package tarball"
+
+          - publish: $(Build.ArtifactStagingDirectory)/$(artifactName)
+            artifact: $(artifactName)
+            displayName: "Publish package artifact"
+
+  - stage: PublishPackage
+    displayName: "Publish package tarball"
+    dependsOn: BuildPackage
+    condition: and(succeeded(), ne(variables['e2eTest'], 'true'))
+    jobs:
+      - job: PublishPackage
+        displayName: "Publish package tarball"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - download: current
+            artifact: $(artifactName)
+            displayName: "Download package artifact"
+
+          - script: |
+              set -euo pipefail
+              ARTIFACT_DIR="$(Pipeline.Workspace)/$(artifactName)"
+              METADATA_FILE="$ARTIFACT_DIR/metadata.json"
+              TARBALL_FILE=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballFile);' "$METADATA_FILE")
+              EXPECTED_SHA256=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballSha256);' "$METADATA_FILE")
+              DIST_TAG=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.distTag);' "$METADATA_FILE")
+              ACTUAL_SHA256=$(sha256sum "$ARTIFACT_DIR/$TARBALL_FILE" | awk '{print $1}')
+              if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+                echo "Tarball SHA-256 mismatch"
+                echo "expected: $EXPECTED_SHA256"
+                echo "actual:   $ACTUAL_SHA256"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=packageTarball;]$ARTIFACT_DIR/$TARBALL_FILE"
+              echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+            displayName: "Verify package artifact"
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(nodeMajorVersion).x"
+            displayName: "Install Node.js"
+
+          - script: |
+              set -euo pipefail
+              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
+              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
+              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
+                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "configured: $(nodeMajorVersion)"
+                echo "package.json: $EXPECTED_NODE_MAJOR"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
+            displayName: "Read tool versions"
+
+          - task: Npm@1
+            inputs:
+              command: custom
+              customCommand: "install -g npm@$(npmVersion)"
+            displayName: "Upgrade npm"
+
+          - task: Npm@1
+            env:
+              NPM_CONFIG_IGNORE_SCRIPTS: "true"
+            inputs:
+              command: custom
+              customCommand: "publish $(packageTarball) --ignore-scripts --tag=$(distTag) --registry=$(registryUrl)"
+              customEndpoint: openupm
+            displayName: "Publish to OpenUPM"
+
+  - stage: PublishE2EPackage
+    displayName: "Publish package tarball to Verdaccio"
+    dependsOn: BuildPackage
+    condition: and(succeeded(), eq(variables['e2eTest'], 'true'))
+    jobs:
+      - job: PublishE2EPackage
+        displayName: "Publish package tarball to Verdaccio"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - download: current
+            artifact: $(artifactName)
+            displayName: "Download package artifact"
+
+          - script: |
+              set -euo pipefail
+              ARTIFACT_DIR="$(Pipeline.Workspace)/$(artifactName)"
+              METADATA_FILE="$ARTIFACT_DIR/metadata.json"
+              TARBALL_FILE=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballFile);' "$METADATA_FILE")
+              EXPECTED_SHA256=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.tarballSha256);' "$METADATA_FILE")
+              PACKAGE_NAME=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.packageName);' "$METADATA_FILE")
+              PACKAGE_VERSION=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.packageVersion);' "$METADATA_FILE")
+              DIST_TAG=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.distTag);' "$METADATA_FILE")
+              ACTUAL_SHA256=$(sha256sum "$ARTIFACT_DIR/$TARBALL_FILE" | awk '{print $1}')
+              if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+                echo "Tarball SHA-256 mismatch"
+                echo "expected: $EXPECTED_SHA256"
+                echo "actual:   $ACTUAL_SHA256"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=packageTarball;]$ARTIFACT_DIR/$TARBALL_FILE"
+              echo "##vso[task.setvariable variable=packageNameFromArtifact;]$PACKAGE_NAME"
+              echo "##vso[task.setvariable variable=packageVersionFromArtifact;]$PACKAGE_VERSION"
+              echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
+            displayName: "Verify package artifact"
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(nodeMajorVersion).x"
+            displayName: "Install Node.js"
+
+          - script: |
+              set -euo pipefail
+              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
+              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
+              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
+                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "configured: $(nodeMajorVersion)"
+                echo "package.json: $EXPECTED_NODE_MAJOR"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
+            displayName: "Read tool versions"
+
+          - script: |
+              set -euo pipefail
+              mkdir -p "$(npmToolDir)"
+              echo "Upgrading npm to $(npmVersion) for e2e publish tooling"
+              npm install --prefix "$(npmToolDir)" "npm@$(npmVersion)"
+              echo "##vso[task.prependpath]$(npmToolDir)/node_modules/.bin"
+              npm --version
+            displayName: "Upgrade npm"
+
+          - script: |
+              set -euo pipefail
+              VERDACCIO_STORAGE_DIR="$(Pipeline.Workspace)/verdaccio-storage"
+              mkdir -p "$VERDACCIO_STORAGE_DIR"
+              chmod 0777 "$VERDACCIO_STORAGE_DIR"
+              echo "Starting Verdaccio on $(verdaccioUrl)"
+              docker run -d --rm \
+                --name verdaccio-e2e \
+                -p "$(verdaccioPort):4873" \
+                -v "$(Build.SourcesDirectory)/test/verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro" \
+                -v "$VERDACCIO_STORAGE_DIR:/verdaccio/storage" \
+                verdaccio/verdaccio:6
+            displayName: "Start Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              echo "Waiting for Verdaccio readiness at $(verdaccioUrl)"
+              for _ in $(seq 1 30); do
+                if curl --silent --fail "$(verdaccioUrl)/-/ping" >/dev/null; then
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "Verdaccio did not become ready"
+              docker logs verdaccio-e2e || true
+              exit 1
+            displayName: "Wait for Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              NPM_USERCONFIG_PATH="$(Pipeline.Workspace)/verdaccio.npmrc"
+              echo "Logging in to Verdaccio with disposable e2e credentials"
+              node "$(Build.SourcesDirectory)/configureVerdaccioNpmrc.js" \
+                "$(verdaccioUrl)" \
+                "openupm-e2e" \
+                "openupm-e2e-password" \
+                "e2e@example.invalid" \
+                "$NPM_USERCONFIG_PATH"
+              echo "Publishing $(packageTarball) to $(verdaccioUrl)"
+              NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
+                npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"
+            displayName: "Publish to Verdaccio"
+
+          - script: |
+              set -euo pipefail
+              echo "Published package metadata from Verdaccio:"
+              npm view "$(packageNameFromArtifact)" --registry="$(verdaccioUrl)" --json
+              echo "Verdaccio storage files:"
+              find "$(Pipeline.Workspace)/verdaccio-storage" -type f | sort
+            displayName: "Print Verdaccio registry content"
+
+          - script: |
+              set -euo pipefail
+              docker logs verdaccio-e2e || true
+              docker rm -f verdaccio-e2e || true
+            condition: always()
+            displayName: "Stop Verdaccio"

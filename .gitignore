@@ -34,3 +34,4 @@ TEST-RESULTS.xml
 result.json
 
 repo
+test/verdaccio/htpasswd

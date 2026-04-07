@@ -1,0 +1,14 @@
+storage: /verdaccio/storage
+
+packages:
+  "@*/*":
+    access: $all
+    publish: $authenticated
+    unpublish: $all
+  "**":
+    access: $all
+    publish: $authenticated
+    unpublish: $all
+
+log:
+  - { type: stdout, format: pretty, level: http }

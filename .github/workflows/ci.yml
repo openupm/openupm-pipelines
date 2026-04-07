@@ -10,12 +10,48 @@ jobs:
         node-version: [22.x]
     name: CI - node ${{ matrix.node-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: set node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
       - name: npm ci
         run: npm ci
       - name: npm test
         run: npm test
+
+  azure-e2e:
+    name: Azure E2E
+    runs-on: ubuntu-latest
+    needs: test
+    if: >-
+      ${{
+        github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/')
+      }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: set node.js 22.x
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.x
+      - name: npm ci
+        run: npm ci
+      - name: Check Azure PAT
+        env:
+          AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
+        run: |
+          if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
+            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
+            exit 0
+          fi
+      - name: Run Azure e2e fixture
+        env:
+          AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
+          SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+        run: |
+          if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
+            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
+            exit 0
+          fi
+          node scripts/runAzureFixture.js --source-branch "$SOURCE_BRANCH"
