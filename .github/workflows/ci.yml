@@ -26,8 +26,7 @@ jobs:
     needs: test
     if: >-
       ${{
-        secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE != '' &&
-        (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/'))
+        github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/')
       }}
     timeout-minutes: 20
     steps:
@@ -38,8 +37,21 @@ jobs:
           node-version: 22.x
       - name: npm ci
         run: npm ci
+      - name: Check Azure PAT
+        env:
+          AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
+        run: |
+          if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
+            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
+            exit 0
+          fi
       - name: Run Azure e2e fixture
         env:
           AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
           SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-        run: node scripts/runAzureFixture.js --source-branch "$SOURCE_BRANCH"
+        run: |
+          if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
+            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
+            exit 0
+          fi
+          node scripts/runAzureFixture.js --source-branch "$SOURCE_BRANCH"
