@@ -236,9 +236,9 @@ stages:
               echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
             displayName: "Verify package artifact"
 
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: "$(nodeMajorVersion).x"
+              version: "$(nodeMajorVersion).x"
             displayName: "Install Node.js"
 
           - script: |
@@ -307,9 +307,9 @@ stages:
               echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
             displayName: "Verify package artifact"
 
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: "$(nodeMajorVersion).x"
+              version: "$(nodeMajorVersion).x"
             displayName: "Install Node.js"
 
           - script: |
