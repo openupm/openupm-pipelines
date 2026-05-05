@@ -272,12 +272,12 @@ stages:
             displayName: "Publish to OpenUPM"
 
   - stage: PublishE2EPackage
-    displayName: "Publish package tarball to Verdaccio"
+    displayName: "E2E test package publish with Verdaccio"
     dependsOn: BuildPackage
     condition: and(succeeded(), eq(variables['e2eTest'], 'true'))
     jobs:
       - job: PublishE2EPackage
-        displayName: "Publish package tarball to Verdaccio"
+        displayName: "E2E test package publish with Verdaccio"
         pool:
           vmImage: "ubuntu-latest"
         steps:
@@ -377,7 +377,7 @@ stages:
               echo "Publishing $(packageTarball) to $(verdaccioUrl)"
               NPM_CONFIG_USERCONFIG="$NPM_USERCONFIG_PATH" \
                 npm publish "$(packageTarball)" --ignore-scripts --tag="$(distTag)" --registry="$(verdaccioUrl)"
-            displayName: "Publish to Verdaccio"
+            displayName: "Publish to test Verdaccio registry"
 
           - script: |
               set -euo pipefail
