@@ -1,6 +1,8 @@
 "use strict";
 /* global describe, it */
 
+require("should");
+
 const {
   DEFAULTS,
   findRecordsByName,

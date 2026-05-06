@@ -61,8 +61,13 @@ stages:
                 echo "unsupported packageSource: ${PACKAGESOURCE:-}"
                 exit 1
               fi
-              echo "##vso[task.setvariable variable=packageSourceMode;]${PACKAGESOURCE:-git}"
-              echo "##vso[build.updatebuildnumber]$(packageName)-$(packageVersion)-$(Build.BuildId)"
+              PACKAGE_SOURCE_MODE="${PACKAGESOURCE:-git}"
+              RUN_MODE="publish"
+              if [ "${E2ETEST:-false}" = "true" ]; then
+                RUN_MODE="e2e"
+              fi
+              echo "##vso[task.setvariable variable=packageSourceMode;]$PACKAGE_SOURCE_MODE"
+              echo "##vso[build.updatebuildnumber]$RUN_MODE-$PACKAGE_SOURCE_MODE-$(packageName)-$(packageVersion)-$(Build.BuildId)"
             displayName: "Prepare context variables"
 
           - script: |
@@ -171,7 +176,17 @@ stages:
           - script: |
               set -euo pipefail
               echo "Computing dist-tag for $(packageName) against $(publishRegistryUrl)"
-              LATEST_VERSION=$(npm --registry="$(publishRegistryUrl)" show "$(packageName)" version) || LATEST_VERSION=0.0.0
+              NPM_SHOW_LOG="$(Agent.TempDirectory)/npm-show-version.log"
+              if npm --registry="$(publishRegistryUrl)" show "$(packageName)" version >"$NPM_SHOW_LOG" 2>&1; then
+                LATEST_VERSION=$(cat "$NPM_SHOW_LOG")
+              elif grep -Eq "(E404|404 Not Found)" "$NPM_SHOW_LOG"; then
+                cat "$NPM_SHOW_LOG"
+                LATEST_VERSION=0.0.0
+              else
+                cat "$NPM_SHOW_LOG"
+                echo "Failed to read package version from $(publishRegistryUrl)"
+                exit 1
+              fi
               [[ -z "$LATEST_VERSION" ]] && LATEST_VERSION=0.0.0
               echo LATEST_VERSION: $LATEST_VERSION
               echo packageVersion: $(packageVersion)
@@ -179,6 +194,7 @@ stages:
               echo DIST_TAG: $DIST_TAG
               echo "##vso[task.setvariable variable=distTag;]$DIST_TAG"
             displayName: "Set distTag variable"
+            condition: ne(variables['e2eTest'], 'true')
 
           - script: |
               set -euo pipefail
@@ -252,6 +268,7 @@ stages:
                 exit 1
               fi
               mv "$TEMP_TARBALL_PATH" "$TARBALL_PATH"
+              echo "Validating downloaded asset extension, archive structure, package/package.json, name, and version"
               node "$(Build.SourcesDirectory)/createPackageArtifactMetadataFromTarball.js" \
                 "$TARBALL_PATH" \
                 "$(packageName)" \
