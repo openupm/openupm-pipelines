@@ -38,6 +38,7 @@ describe("runAzureFixture.js", function () {
   it("defaults to the documented manual fixture", function () {
     DEFAULTS.packageName.should.equal("com.example.nuget-consumer");
     DEFAULTS.packageVersion.should.equal("1.0.1");
+    DEFAULTS.packageSource.should.equal("git");
     DEFAULTS.e2eTest.should.equal("true");
   });
 });

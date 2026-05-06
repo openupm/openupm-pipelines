@@ -28,9 +28,14 @@ describe("configureVerdaccioNpmrc.js", function () {
       });
     });
 
-    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise((resolve) =>
+      server.listen(0, "127.0.0.1", () => resolve(undefined)),
+    );
     const address = server.address();
     should.exist(address);
+    if (!address || typeof address === "string") {
+      throw new Error("Expected TCP server address");
+    }
 
     const tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), "configure-verdaccio-npmrc-"),

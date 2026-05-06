@@ -1,0 +1,9 @@
+{
+  "name": "com.example.release-asset",
+  "version": "1.0.0",
+  "displayName": "Release Asset Fixture",
+  "description": "Fixture package for GitHub Release asset pipeline e2e tests.",
+  "unity": "2021.3",
+  "author": "OpenUPM",
+  "license": "MIT"
+}
