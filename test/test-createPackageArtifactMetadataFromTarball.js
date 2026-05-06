@@ -69,6 +69,27 @@ describe("createPackageArtifactMetadataFromTarball.js", function () {
     });
   });
 
+  it("accepts .tar.gz package assets", function () {
+    const tarballPath = createTarball(
+      {
+        name: "package-a",
+        version: "1.0.0",
+      },
+      "package-a-1.0.0.tar.gz",
+    );
+
+    const metadata = createPackageArtifactMetadataFromTarball(
+      tarballPath,
+      "package-a",
+      "1.0.0",
+      "latest",
+    );
+
+    metadata.tarballFile.should.equal("package-a-1.0.0.tar.gz");
+    metadata.packageName.should.equal("package-a");
+    metadata.packageVersion.should.equal("1.0.0");
+  });
+
   it("rejects unsupported asset extension", function () {
     (() => validateTarballExtension("package.zip")).should.throw(
       /Unsupported package asset extension/,
