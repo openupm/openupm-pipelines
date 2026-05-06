@@ -32,6 +32,9 @@
 - Before committing, run `npm run format:check`.
 - Run `npm run typecheck` when type-related changes are made (JSDoc/tsconfig).
 - When changing `azure-pipelines.yml`, preserve end-to-end behavior for Git submodules, Git LFS fetches, and log visibility for clone/LFS failures because OpenUPM parses those logs.
+- When working from a plan, after finishing any item, always state the next
+  concrete step. Continue doing this until the plan is genuinely complete so
+  the user does not need to ask "what's next?".
 
 ## Pipeline Guardrails
 
