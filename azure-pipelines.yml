@@ -2,6 +2,7 @@
 name: $(Build.BuildId)
 
 trigger: none
+pr: none
 
 variables:
   ### context variables
