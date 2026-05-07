@@ -31,6 +31,7 @@ jobs:
     env:
       AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
       SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+      AZURE_E2E_ALLOW_MISSING_TOKEN: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -42,6 +43,10 @@ jobs:
         id: azure-pat
         run: |
           if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
+            if [ "${AZURE_E2E_ALLOW_MISSING_TOKEN:-false}" != "true" ]; then
+              echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is required for Azure E2E in this repository."
+              exit 1
+            fi
             echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
             echo "has_token=false" >> "$GITHUB_OUTPUT"
           else
