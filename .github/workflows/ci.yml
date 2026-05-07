@@ -28,6 +28,9 @@ jobs:
       ${{
         github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/')
       }}
+    env:
+      AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
+      SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -38,20 +41,30 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: Check Azure PAT
-        env:
-          AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
         run: |
           if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
-            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
-            exit 0
+            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is required for Azure E2E."
+            exit 1
           fi
-      - name: Run Azure e2e fixture
-        env:
-          AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE: ${{ secrets.AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE }}
-          SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+      - name: Run Azure git e2e fixture
         run: |
-          if [ -z "${AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE:-}" ]; then
-            echo "AZURE_DEVOPS_TOKEN_OPENUPM_PIPELINE is not configured; skipping Azure E2E."
-            exit 0
-          fi
-          node scripts/runAzureFixture.js --source-branch "$SOURCE_BRANCH"
+          node scripts/runAzureFixture.js \
+            --source-branch "$SOURCE_BRANCH" \
+            --repo-url "https://github.com/favoyang/com.example.nuget-consumer" \
+            --repo-branch "1.0.1" \
+            --package-name "com.example.nuget-consumer" \
+            --package-version "1.0.1" \
+            --package-source "git"
+      - name: Run Azure GitHub Release asset e2e fixture
+        env:
+          ASSET_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/test/fixtures/assets/com.example.release-asset-1.0.0.tgz
+        run: |
+          node scripts/runAzureFixture.js \
+            --source-branch "$SOURCE_BRANCH" \
+            --repo-url "https://github.com/${{ github.repository }}" \
+            --repo-branch "${{ github.sha }}" \
+            --package-name "com.example.release-asset" \
+            --package-version "1.0.0" \
+            --package-source "githubRelease" \
+            --package-asset-url "$ASSET_URL" \
+            --package-asset-name "com.example.release-asset-1.0.0.tgz"

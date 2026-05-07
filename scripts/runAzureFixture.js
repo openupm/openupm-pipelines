@@ -10,6 +10,9 @@ const DEFAULTS = {
   repoBranch: "1.0.1",
   packageName: "com.example.nuget-consumer",
   packageVersion: "1.0.1",
+  packageSource: "git",
+  packageAssetUrl: "",
+  packageAssetName: "",
   e2eTest: "true",
   pollIntervalMs: 10000,
 };
@@ -19,6 +22,7 @@ const DEFAULTS = {
  * @returns {Record<string, string>}
  */
 function parseArgs(argv) {
+  /** @type {Record<string, string>} */
   const options = {};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -167,16 +171,23 @@ async function main() {
   };
 
   const baseUrl = `https://dev.azure.com/${options.organization}/${options.project}`;
+  /** @type {Record<string, string>} */
+  const parameters = {
+    repoUrl: options.repoUrl,
+    repoBranch: options.repoBranch,
+    packageName: options.packageName,
+    packageVersion: options.packageVersion,
+    packageSource: options.packageSource,
+    e2eTest: options.e2eTest,
+  };
+  if (options.packageAssetUrl)
+    parameters.packageAssetUrl = options.packageAssetUrl;
+  if (options.packageAssetName)
+    parameters.packageAssetName = options.packageAssetName;
   const payload = {
     definition: { id: Number(options.definitionId) },
     sourceBranch,
-    parameters: JSON.stringify({
-      repoUrl: options.repoUrl,
-      repoBranch: options.repoBranch,
-      packageName: options.packageName,
-      packageVersion: options.packageVersion,
-      e2eTest: options.e2eTest,
-    }),
+    parameters: JSON.stringify(parameters),
   };
 
   const queueResponse = await azureFetch(

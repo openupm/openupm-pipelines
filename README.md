@@ -29,7 +29,7 @@ Prepare an npm service connection:
 
 ## Build with REST API
 
-Required `parameters` payload:
+Required `parameters` payload for the default git source mode:
 
 ```json
 {
@@ -37,6 +37,29 @@ Required `parameters` payload:
   "repoBranch": "master",
   "packageName": "com.yourcompany.package...",
   "packageVersion": "1.2.3",
+  "packageSource": "git",
+  "e2eTest": "false"
+}
+```
+
+`packageSource` is optional and defaults to `"git"`. In git mode the pipeline
+clones `repoUrl` at `repoBranch`, finds `packageName`, packs it, and publishes
+the generated tarball.
+
+For GitHub Release asset mode, OpenUPM queue resolves the release and asset
+before queueing Azure. The pipeline receives the exact public asset URL and
+filename, downloads that file without GitHub authentication, validates it, and
+publishes it unchanged:
+
+```json
+{
+  "repoUrl": "https://github.com/owner/repo",
+  "repoBranch": "v1.2.3",
+  "packageName": "com.yourcompany.package",
+  "packageVersion": "1.2.3",
+  "packageSource": "githubRelease",
+  "packageAssetUrl": "https://github.com/owner/repo/releases/download/v1.2.3/com.yourcompany.package-1.2.3.tgz",
+  "packageAssetName": "com.yourcompany.package-1.2.3.tgz",
   "e2eTest": "false"
 }
 ```
@@ -65,7 +88,7 @@ curl --verbose \
   "https://dev.azure.com/openupm/openupm/_apis/build/builds?api-version=5.1" \
   --json '{
     "definition": { "id": 1 },
-    "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"e2eTest\":\"false\"}"
+    "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"packageSource\":\"git\",\"e2eTest\":\"false\"}"
   }'
 ```
 
@@ -79,7 +102,7 @@ testing changes from a non-default branch of `openupm-pipelines`:
 {
   "definition": { "id": 1 },
   "sourceBranch": "refs/heads/your-branch-name",
-  "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"e2eTest\":\"false\"}"
+  "parameters": "{\"repoUrl\":\"https://...\",\"repoBranch\":\"master\",\"packageName\":\"com.yourcompany.package...\",\"packageVersion\":\"1.2.3\",\"packageSource\":\"git\",\"e2eTest\":\"false\"}"
 }
 ```
 
