@@ -7,6 +7,7 @@ const path = require("path");
 
 const {
   createPackageArtifactMetadataFromTarball,
+  hasSignedAttestation,
   validateTarballExtension,
 } = require("../createPackageArtifactMetadataFromTarball");
 
@@ -25,6 +26,7 @@ describe("createPackageArtifactMetadataFromTarball.js", function () {
   const createTarball = function (
     packageJson,
     filename = "package-a-1.0.0.tgz",
+    files = {},
   ) {
     const tarRoot = path.join(tmpRoot, "tar-root");
     const packageDir = path.join(tarRoot, "package");
@@ -34,6 +36,9 @@ describe("createPackageArtifactMetadataFromTarball.js", function () {
       path.join(packageDir, "package.json"),
       `${JSON.stringify(packageJson, null, 2)}\n`,
     );
+    for (const [name, content] of Object.entries(files)) {
+      fs.writeFileSync(path.join(packageDir, name), content);
+    }
     childProcess.execFileSync("tar", [
       "-czf",
       tarballPath,
@@ -66,7 +71,30 @@ describe("createPackageArtifactMetadataFromTarball.js", function () {
         .createHash("sha256")
         .update(fs.readFileSync(tarballPath))
         .digest("hex"),
+      signed: false,
     });
+  });
+
+  it("detects signed package attestations", function () {
+    const tarballPath = createTarball(
+      {
+        name: "package-a",
+        version: "1.0.0",
+      },
+      "package-a-1.0.0.tgz",
+      { ".attestation.p7m": "signature" },
+    );
+
+    hasSignedAttestation(tarballPath).should.equal(true);
+
+    const metadata = createPackageArtifactMetadataFromTarball(
+      tarballPath,
+      "package-a",
+      "1.0.0",
+      "latest",
+    );
+
+    metadata.signed.should.equal(true);
   });
 
   it("accepts .tar.gz package assets", function () {

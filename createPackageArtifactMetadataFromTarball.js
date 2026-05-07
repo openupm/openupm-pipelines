@@ -33,6 +33,30 @@ const validateTarballExtension = function (tarballPath) {
 
 /**
  * @param {string} tarballPath
+ * @returns {boolean}
+ */
+const hasSignedAttestation = function (tarballPath) {
+  validateTarballExtension(tarballPath);
+  let listText;
+  try {
+    listText = childProcess.execFileSync(
+      "tar",
+      ["-tzf", path.resolve(tarballPath)],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+  } catch {
+    throw new Error("Downloaded package asset is not a valid tar archive");
+  }
+  return listText
+    .split(/\r?\n/)
+    .some((entry) => entry === "package/.attestation.p7m");
+};
+
+/**
+ * @param {string} tarballPath
  * @returns {PackageJson}
  */
 const readPackageJsonFromTarball = function (tarballPath) {
@@ -76,6 +100,7 @@ const readPackageJsonFromTarball = function (tarballPath) {
  *   distTag: string,
  *   tarballFile: string,
  *   tarballSha256: string,
+ *   signed: boolean,
  * }}
  */
 const createPackageArtifactMetadataFromTarball = function (
@@ -106,6 +131,7 @@ const createPackageArtifactMetadataFromTarball = function (
     distTag,
     tarballFile: path.basename(resolvedTarballPath),
     tarballSha256: sha256File(resolvedTarballPath),
+    signed: hasSignedAttestation(resolvedTarballPath),
   };
 };
 
@@ -128,6 +154,7 @@ if (require.main === module) {
 
 module.exports = {
   createPackageArtifactMetadataFromTarball,
+  hasSignedAttestation,
   readPackageJsonFromTarball,
   validateTarballExtension,
 };

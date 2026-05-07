@@ -51,6 +51,7 @@ describe("createPackageArtifactMetadata.js", function () {
         .createHash("sha256")
         .update("tarball-content")
         .digest("hex"),
+      signed: false,
     });
   });
 });

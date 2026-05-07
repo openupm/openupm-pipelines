@@ -351,6 +351,13 @@ stages:
               customEndpoint: openupm
             displayName: "Publish to OpenUPM"
 
+          - script: |
+              set -euo pipefail
+              METADATA_FILE="$(Pipeline.Workspace)/$(artifactName)/metadata.json"
+              SIGNED=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.signed === true ? "true" : "false");' "$METADATA_FILE")
+              echo "OPENUPM_PACKAGE_RESULT {\"signed\":$SIGNED}"
+            displayName: "Emit package result"
+
   - stage: PublishE2EPackage
     displayName: "E2E test package publish with Verdaccio"
     dependsOn: BuildPackage
@@ -471,5 +478,8 @@ stages:
               set -euo pipefail
               docker logs verdaccio-e2e || true
               docker rm -f verdaccio-e2e || true
+              METADATA_FILE="$(Pipeline.Workspace)/$(artifactName)/metadata.json"
+              SIGNED=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(result.signed === true ? "true" : "false");' "$METADATA_FILE")
+              echo "OPENUPM_PACKAGE_RESULT {\"signed\":$SIGNED}"
             condition: always()
             displayName: "Stop Verdaccio"

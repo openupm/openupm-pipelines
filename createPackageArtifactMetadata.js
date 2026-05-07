@@ -22,6 +22,7 @@ const sha256File = function (filePath) {
  *   distTag: string,
  *   tarballFile: string,
  *   tarballSha256: string,
+ *   signed: boolean,
  * }}
  */
 const createPackageArtifactMetadata = function (
@@ -39,6 +40,7 @@ const createPackageArtifactMetadata = function (
     distTag,
     tarballFile: path.basename(resolvedTarballPath),
     tarballSha256: sha256File(resolvedTarballPath),
+    signed: false,
   };
 };
 
