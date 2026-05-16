@@ -211,11 +211,17 @@ stages:
 
           - script: |
               set -euo pipefail
+              REPOSITORY_REVISION=$(git -C "$(repoDir)" rev-parse HEAD)
               cd "$(packageFolder)"
+              echo "Patching repository metadata in $(packageFolder)"
+              node "$(Build.SourcesDirectory)/patchPackageRepository.js" \
+                . \
+                "$(repoUrl)" \
+                "$REPOSITORY_REVISION"
               echo "Overriding publishConfig.registry in $(packageFolder)"
               npm pkg set publishConfig.registry="$(publishRegistryUrl)"
               cat package.json
-            displayName: "Override publishConfig"
+            displayName: "Patch package metadata"
             condition: eq(variables['packageSourceMode'], 'git')
 
           - script: |
@@ -470,6 +476,10 @@ stages:
               set -euo pipefail
               echo "Published package metadata from Verdaccio:"
               npm view "$(packageNameFromArtifact)" --registry="$(verdaccioUrl)" --json
+              if [ "${PACKAGESOURCE:-git}" = "git" ]; then
+                REPOSITORY_JSON=$(npm view "$(packageNameFromArtifact)@$(packageVersionFromArtifact)" repository --registry="$(verdaccioUrl)" --json)
+                node -e 'const repo=JSON.parse(process.argv[1]); if (!repo || repo.type !== "git" || typeof repo.url !== "string" || repo.url.length === 0 || typeof repo.revision !== "string" || !/^([0-9a-f]{40}|[0-9a-f]{64})$/.test(repo.revision)) { console.error("Published package repository metadata is invalid"); console.error(JSON.stringify(repo)); process.exit(1); }' "$REPOSITORY_JSON"
+              fi
               echo "Verdaccio storage files:"
               find "$(Pipeline.Workspace)/verdaccio-storage" -type f | sort
             displayName: "Print Verdaccio registry content"
