@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { readPackageJson } = require("./lib/packageJson");
 
 /**
  * @param {string} filePath
@@ -31,7 +32,7 @@ const createPackageArtifactMetadata = function (
   distTag,
 ) {
   const packageJsonPath = path.resolve(packageFolder, "package.json");
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+  const packageJson = readPackageJson(packageJsonPath);
   const resolvedTarballPath = path.resolve(tarballPath);
 
   return {

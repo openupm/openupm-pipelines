@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 require("should");
+const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const {
@@ -25,6 +26,14 @@ describe("findPackage.js", function () {
         name: "package-a",
       });
       const result = await findPackage("package-a", tmpDir);
+      result.pkg.name.should.equal("package-a");
+    });
+    it("finds package.json with a UTF-8 BOM", async function () {
+      const packageJsonPath = path.resolve(tmpDir, "package.json");
+      fs.writeFileSync(packageJsonPath, '\uFEFF{"name":"package-a"}\n');
+
+      const result = await findPackage("package-a", tmpDir);
+
       result.pkg.name.should.equal("package-a");
     });
     it("find failed", async function () {
