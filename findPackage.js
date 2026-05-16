@@ -4,15 +4,7 @@ const findit = require("findit2");
 const path = require("path");
 const relative = require("relative");
 const { logDebug, logError } = require("./lib/logger");
-
-/**
- * @param {string} filePath
- * @returns {{name?: string}}
- */
-const readPackageJson = function (filePath) {
-  const raw = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(raw);
-};
+const { readPackageJson } = require("./lib/packageJson");
 
 /**
  * @param {string} packageName

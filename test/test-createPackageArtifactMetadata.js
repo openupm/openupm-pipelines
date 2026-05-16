@@ -54,4 +54,24 @@ describe("createPackageArtifactMetadata.js", function () {
       signed: false,
     });
   });
+
+  it("creates artifact metadata from package.json with a UTF-8 BOM", function () {
+    const packageDir = path.join(tmpDir, "pkg");
+    const tarballPath = path.join(packageDir, "package-a-1.0.0.tgz");
+    fs.mkdirSync(packageDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageDir, "package.json"),
+      '\uFEFF{"name":"package-a","version":"1.0.0"}\n',
+    );
+    fs.writeFileSync(tarballPath, "tarball-content");
+
+    const metadata = createPackageArtifactMetadata(
+      packageDir,
+      tarballPath,
+      "latest",
+    );
+
+    metadata.packageName.should.equal("package-a");
+    metadata.packageVersion.should.equal("1.0.0");
+  });
 });
