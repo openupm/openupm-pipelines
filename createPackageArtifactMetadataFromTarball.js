@@ -121,7 +121,7 @@ const createPackageArtifactMetadataFromTarball = function (
   }
   if (packageJson.version !== expectedPackageVersion) {
     throw new Error(
-      `Downloaded package asset version mismatch: actual=${packageJson.version}, expected=${expectedPackageVersion}`,
+      `Downloaded package asset version mismatch: package.json.version=${packageJson.version}, expectedReleaseVersion=${expectedPackageVersion}`,
     );
   }
 
