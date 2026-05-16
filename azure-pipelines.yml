@@ -204,6 +204,7 @@ stages:
               node findPackage.js "$(packageName)" "$(repoDir)" result.json
               PACKAGEFOLDER=$(node -e 'const fs=require("fs"); const result=JSON.parse(fs.readFileSync("result.json","utf8")); console.log(result.dirname);')
               echo "PACKAGEFOLDER: $PACKAGEFOLDER"
+              node validatePackageManifest.js "$PACKAGEFOLDER" "$(packageName)" "$(packageVersion)"
               echo "##vso[task.setvariable variable=packageFolder;]$PACKAGEFOLDER"
             displayName: "Detect package.json location"
             condition: eq(variables['packageSourceMode'], 'git')
