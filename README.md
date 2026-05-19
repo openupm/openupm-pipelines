@@ -46,6 +46,25 @@ Required `parameters` payload for the default git source mode:
 clones `repoUrl` at `repoBranch`, finds `packageName`, packs it, and publishes
 the generated tarball.
 
+### Git LFS behavior
+
+In git source mode, package repositories are cloned with Git LFS smudge disabled
+and LFS objects are fetched in explicit follow-up steps. This keeps clone and
+LFS failures visible in separate Azure log sections.
+
+For public repositories hosted on `github.com`, the pipeline configures the
+cloned repository and its submodules to fetch LFS objects from GitHub's HTTPS
+LFS endpoint:
+
+```text
+https://github.com/<owner>/<repo>.git/info/lfs
+```
+
+This deliberately avoids SSH host-key and SSH-key requirements for upstream
+package repositories. It also handles package repositories that include a
+repository `.lfsconfig` pointing at `ssh://git@github.com/...`, while keeping
+non-GitHub remotes unchanged.
+
 For GitHub Release asset mode, OpenUPM queue resolves the release and asset
 before queueing Azure. The pipeline receives the exact public asset URL and
 filename, downloads that file without GitHub authentication, validates it, and
