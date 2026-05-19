@@ -141,7 +141,7 @@ stages:
           - script: |
               set -euo pipefail
               echo "Cloning $(repoUrl) @ $(repoBranch)"
-              GIT_CLONE_PROTECTION_ACTIVE=false git \
+              GIT_CLONE_PROTECTION_ACTIVE=false GIT_LFS_SKIP_SMUDGE=1 git \
                 -c init.templateDir=/dev/null \
                 -c core.hooksPath=/dev/null \
                 clone --recursive --shallow-submodules --depth 1 --branch "$(repoBranch)" "$(repoUrl)" "$(repoDir)"
@@ -154,9 +154,20 @@ stages:
 
           - script: |
               set -euo pipefail
+              node configureGitLfsUrl.js "$(repoDir)"
+              git -C "$(repoDir)" submodule foreach --recursive 'node "$(Build.SourcesDirectory)/configureGitLfsUrl.js" "."'
+            displayName: "Configure Git LFS transport"
+            condition: eq(variables['packageSourceMode'], 'git')
+            env:
+              HOME: $(gitHomeDir)
+              XDG_CONFIG_HOME: $(gitConfigDir)
+
+          - script: |
+              set -euo pipefail
               cd "$(repoDir)"
               echo "Fetching Git LFS objects for $(repoDir)"
               git lfs pull
+              git lfs checkout
             displayName: "Fetch Git LFS"
             condition: eq(variables['packageSourceMode'], 'git')
             env:
@@ -167,7 +178,7 @@ stages:
               set -euo pipefail
               cd "$(repoDir)"
               echo "Fetching Git LFS objects for submodules in $(repoDir)"
-              git submodule foreach --recursive 'git lfs pull'
+              git submodule foreach --recursive 'git lfs pull && git lfs checkout'
             displayName: "Fetch submodule Git LFS"
             condition: eq(variables['packageSourceMode'], 'git')
             env:
