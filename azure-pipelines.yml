@@ -155,7 +155,7 @@ stages:
           - script: |
               set -euo pipefail
               node configureGitLfsUrl.js "$(repoDir)"
-              git submodule foreach --recursive 'node "$(Build.SourcesDirectory)/configureGitLfsUrl.js" "."'
+              git -C "$(repoDir)" submodule foreach --recursive 'node "$(Build.SourcesDirectory)/configureGitLfsUrl.js" "."'
             displayName: "Configure Git LFS transport"
             condition: eq(variables['packageSourceMode'], 'git')
             env:
