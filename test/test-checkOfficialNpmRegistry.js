@@ -41,4 +41,28 @@ describe("checkOfficialNpmRegistry.js", function () {
       },
     ]);
   });
+
+  it("rejects non-official nested legacy dependency URLs", function () {
+    const violations = collectRegistryViolations({
+      packages: {},
+      dependencies: {
+        parent: {
+          resolved: "https://registry.npmjs.org/parent/-/parent-1.0.0.tgz",
+          dependencies: {
+            child: {
+              resolved:
+                "https://registry.npmmirror.com/child/-/child-1.0.0.tgz",
+            },
+          },
+        },
+      },
+    });
+
+    should(violations).eql([
+      {
+        name: "parent > child",
+        resolved: "https://registry.npmmirror.com/child/-/child-1.0.0.tgz",
+      },
+    ]);
+  });
 });

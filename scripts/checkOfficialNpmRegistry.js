@@ -13,10 +13,21 @@ function collectRegistryViolations(lockfile) {
   for (const [name, dependency] of Object.entries(
     lockfile.dependencies || {},
   )) {
-    visitDependency(violations, name, dependency);
+    visitDependencyTree(violations, name, dependency);
   }
 
   return violations;
+}
+
+function visitDependencyTree(violations, name, dependency) {
+  visitDependency(violations, name, dependency);
+  if (!dependency || typeof dependency !== "object") return;
+
+  for (const [childName, childDependency] of Object.entries(
+    dependency.dependencies || {},
+  )) {
+    visitDependencyTree(violations, `${name} > ${childName}`, childDependency);
+  }
 }
 
 function visitDependency(violations, name, dependency) {
