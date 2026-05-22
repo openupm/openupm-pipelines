@@ -6,6 +6,7 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test mocha",
     "test:e2e:azure": "node scripts/runAzureFixture.js",
+    "check:official-registry": "node scripts/checkOfficialNpmRegistry.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

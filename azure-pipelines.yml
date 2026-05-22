@@ -117,6 +117,7 @@ stages:
           - script: |
               set -euo pipefail
               echo "Installing pipeline dependencies for helper scripts"
+              npm run check:official-registry
               HUSKY=0 npm ci
             displayName: "Install pipeline dependencies"
 
