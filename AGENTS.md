@@ -43,8 +43,8 @@
 - Do not introduce OpenUPM publish credentials into `BuildPackage`.
 - `PublishPackage` and `PublishE2EPackage` must publish the tarball artifact, not the source checkout.
 - Keep `npm publish --ignore-scripts` in the publish stage so publish-time hooks cannot execute there.
-- Keep the `BuildPackage` container image aligned with `package.json` Volta Node major. The YAML uses one hardcoded `nodeMajorVersion` and asserts it against `package.json`.
-- Read the npm version from `package.json` instead of hardcoding it in multiple places.
+- Keep the `BuildPackage` container image aligned with `mise.toml` Node major. The YAML uses one hardcoded `nodeMajorVersion` and asserts it against `mise.toml`.
+- Read the npm version from `mise.toml` instead of hardcoding it in multiple places.
 - Keep `prepare`/Husky for local development, but disable Husky during CI dependency installation in `BuildPackage`.
 - Use `e2eTest=true` to route a run to the Verdaccio-based e2e publish stage. Omitted or `false` means normal OpenUPM publish.
 
@@ -54,7 +54,7 @@
 - For Azure pipeline debugging, prefer preserving native command output instead of wrapping failures in generic helper scripts.
 - Keep clone/LFS/submodule operations in explicit script steps so their stderr/stdout remains parsable in Azure logs.
 - If Git LFS behavior changes, check both the container image contents and the effective Git config seen inside `BuildPackage`.
-- If a pipeline tool version changes, verify both the YAML `nodeMajorVersion` and the `package.json` Volta values.
+- If a pipeline tool version changes, verify both the YAML `nodeMajorVersion` and the `mise.toml` values.
 - When queueing Azure via REST API from a non-default branch of this repo, set `sourceBranch` so the run uses that branch's pipeline definition instead of the default branch.
 - Verdaccio e2e config lives at `test/verdaccio/config.yaml`.
 - Manual e2e fixture for this repo:
@@ -88,5 +88,5 @@ Conflict` from the publish step.
 
 ## Configuration & Environment Notes
 
-- Node tooling is pinned via Volta in `package.json`.
+- Node tooling is pinned via mise in `mise.toml`.
 - Pipeline variables are expected by `azure-pipelines.yml`; see `README.md` for usage examples.

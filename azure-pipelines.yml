@@ -84,14 +84,15 @@ stages:
 
           - script: |
               set -euo pipefail
-              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
-              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
-              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
-              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              EXPECTED_NODE_VERSION=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml)
+              EXPECTED_NODE_MAJOR=${EXPECTED_NODE_VERSION%%.*}
+              EXPECTED_NPM_VERSION=$(sed -n 's/^npm = "\(.*\)"/\1/p' mise.toml)
+              echo "Expected Node major from mise.toml: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from mise.toml: $EXPECTED_NPM_VERSION"
               if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
-                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "Configured nodeMajorVersion does not match mise.toml node"
                 echo "configured: $(nodeMajorVersion)"
-                echo "package.json: $EXPECTED_NODE_MAJOR"
+                echo "mise.toml: $EXPECTED_NODE_MAJOR"
                 exit 1
               fi
               echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
@@ -342,14 +343,15 @@ stages:
 
           - script: |
               set -euo pipefail
-              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
-              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
-              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
-              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              EXPECTED_NODE_VERSION=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml)
+              EXPECTED_NODE_MAJOR=${EXPECTED_NODE_VERSION%%.*}
+              EXPECTED_NPM_VERSION=$(sed -n 's/^npm = "\(.*\)"/\1/p' mise.toml)
+              echo "Expected Node major from mise.toml: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from mise.toml: $EXPECTED_NPM_VERSION"
               if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
-                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "Configured nodeMajorVersion does not match mise.toml node"
                 echo "configured: $(nodeMajorVersion)"
-                echo "package.json: $EXPECTED_NODE_MAJOR"
+                echo "mise.toml: $EXPECTED_NODE_MAJOR"
                 exit 1
               fi
               echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
@@ -419,14 +421,15 @@ stages:
 
           - script: |
               set -euo pipefail
-              EXPECTED_NODE_MAJOR=$(node -p 'require("./package.json").volta.node.split(".")[0]')
-              EXPECTED_NPM_VERSION=$(node -p 'require("./package.json").volta.npm')
-              echo "Expected Node major from package.json: $EXPECTED_NODE_MAJOR"
-              echo "Expected npm version from package.json: $EXPECTED_NPM_VERSION"
+              EXPECTED_NODE_VERSION=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml)
+              EXPECTED_NODE_MAJOR=${EXPECTED_NODE_VERSION%%.*}
+              EXPECTED_NPM_VERSION=$(sed -n 's/^npm = "\(.*\)"/\1/p' mise.toml)
+              echo "Expected Node major from mise.toml: $EXPECTED_NODE_MAJOR"
+              echo "Expected npm version from mise.toml: $EXPECTED_NPM_VERSION"
               if [ "$EXPECTED_NODE_MAJOR" != "$(nodeMajorVersion)" ]; then
-                echo "Configured nodeMajorVersion does not match package.json volta.node"
+                echo "Configured nodeMajorVersion does not match mise.toml node"
                 echo "configured: $(nodeMajorVersion)"
-                echo "package.json: $EXPECTED_NODE_MAJOR"
+                echo "mise.toml: $EXPECTED_NODE_MAJOR"
                 exit 1
               fi
               echo "##vso[task.setvariable variable=npmVersion;]$EXPECTED_NPM_VERSION"
