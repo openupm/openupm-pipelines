@@ -91,7 +91,7 @@ Conflict` from the publish step.
 - Node tooling is pinned via mise in `mise.toml`.
 - Pipeline variables are expected by `azure-pipelines.yml`; see `README.md` for usage examples.
 
-# Pull Request Delivery Workflow
+## Pull Request Delivery Workflow
 
 Deliver repository changes through pull requests by default, regardless of
 size. Do not make changes directly in the main checkout unless the user
